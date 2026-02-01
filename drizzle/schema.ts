@@ -360,3 +360,23 @@ export const servicosCatalogo = mysqlTable("servicos_catalogo", {
 
 export type ServicoCatalogo = typeof servicosCatalogo.$inferSelect;
 export type InsertServicoCatalogo = typeof servicosCatalogo.$inferInsert;
+
+
+/**
+ * 16_PENDENCIAS - Pendências da equipe
+ * TELAS: AdminDashboard, AdminPendencias
+ */
+export const pendencias = mysqlTable("pendencias", {
+  id: int("id").autoincrement().primaryKey(),
+  nomePendencia: varchar("nomePendencia", { length: 255 }).notNull(),
+  responsavelId: int("responsavelId").notNull(), // colaborador responsável
+  criadorId: int("criadorId").notNull(), // quem criou a pendência
+  status: mysqlEnum("status", ["pendente", "feita", "feita_ressalvas", "nao_feita"]).default("pendente").notNull(),
+  dataCriacao: timestamp("dataCriacao").defaultNow().notNull(),
+  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
+  observacoes: text("observacoes"),
+  empresaId: int("empresaId"),
+});
+
+export type Pendencia = typeof pendencias.$inferSelect;
+export type InsertPendencia = typeof pendencias.$inferInsert;

@@ -217,32 +217,30 @@ export default function AdminDashboard() {
 
         {/* Content */}
         <div className="flex-1 p-6 overflow-auto">
-          {/* Pendências do dia */}
-          <Card className="bg-[#1a1f26] border-gray-800 mb-6">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <h2 className="text-white font-medium">Pendências do dia</h2>
-                </div>
-                <Link href="/admin/operacional">
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white text-xs h-7">
-                    Linhas da equipe <ChevronRight className="h-3 w-3 ml-1" />
-                  </Button>
-                </Link>
-              </div>
-              <div className="flex gap-4">
-                {equipeConsultores.map((consultor) => (
-                  <div key={consultor.id} className="flex items-center gap-2 bg-[#252b33] rounded-lg px-3 py-2">
-                    <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                      <Users className="h-4 w-4 text-gray-300" />
-                    </div>
-                    <span className="text-white text-sm">{consultor.nome}</span>
+          {/* Pendências do dia - Botão clicável que vai para página de pendências */}
+          <Link href="/admin/pendencias">
+            <Card className="bg-[#1a1f26] border-gray-800 mb-6 cursor-pointer hover:bg-[#252b33] transition-colors">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <h2 className="text-white font-medium">Pendências do dia</h2>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                </div>
+                <div className="flex gap-4">
+                  {equipeConsultores.map((consultor) => (
+                    <div key={consultor.id} className="flex items-center gap-2 bg-[#252b33] rounded-lg px-3 py-2">
+                      <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                        <Users className="h-4 w-4 text-gray-300" />
+                      </div>
+                      <span className="text-white text-sm">{consultor.nome}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
 
           {/* Tabs: Operacional, Financeiro, Produtividade, Agenda */}
           <Tabs defaultValue="operacional" className="w-full">

@@ -89,3 +89,16 @@
 - [x] Lista de agendamentos com dados do cliente/veículo
 - [x] Botão "Confirmar Chegada" (em vez de WhatsApp)
 - [x] Ao confirmar chegada: criar OS automaticamente e abrir card no Kanban em Diagnóstico
+
+## Ajustes Nova OS
+- [x] Juntar "Sel. Cliente" e "Sel. Veículos" em um único campo
+- [x] Trocar "Sel. Veículos" por "Adicionar Novo Cliente"
+- [x] Simplificar formulário novo cliente: Nome, Telefone, Placa, Veículo
+
+## Sistema de Pendências
+- [x] Apagar botão "Linhas da equipe" do Dashboard
+- [x] Ativar botão "Operacional" para ir para página operacional
+- [x] Transformar "Pendências do dia" em botão clicável que vai para nova página
+- [x] Criar página de Pendências com lista de consultores
+- [x] Criar modal de Nova Pendência com formulário
+- [ ] Criar tabela de pendências no banco de dados (usando mock por enquanto)
