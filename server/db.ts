@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, colaboradores, empresas, mecanicos, recursos, niveisAcesso, clientes, veiculos, ordensServico, InsertOrdemServico } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,211 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// =====================================================
+// DOCTOR AUTO - QUERIES
+// =====================================================
+
+// Colaboradores
+export async function getColaboradorByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(colaboradores).where(eq(colaboradores.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getColaboradorById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(colaboradores).where(eq(colaboradores.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getAllColaboradores() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(colaboradores);
+}
+
+export async function getColaboradoresByEmpresa(empresaId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(colaboradores).where(eq(colaboradores.empresaId, empresaId));
+}
+
+export async function updateColaboradorSenha(id: number, novaSenha: string) {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(colaboradores)
+    .set({ senha: novaSenha, primeiroAcesso: false })
+    .where(eq(colaboradores.id, id));
+  
+  return true;
+}
+
+// Empresas
+export async function getAllEmpresas() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(empresas);
+}
+
+export async function getEmpresaById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(empresas).where(eq(empresas.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Mecânicos
+export async function getAllMecanicos() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(mecanicos);
+}
+
+export async function getMecanicosByEmpresa(empresaId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(mecanicos).where(eq(mecanicos.empresaId, empresaId));
+}
+
+// Recursos
+export async function getAllRecursos() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(recursos);
+}
+
+export async function getRecursosByEmpresa(empresaId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(recursos).where(eq(recursos.empresaId, empresaId));
+}
+
+// Níveis de Acesso
+export async function getAllNiveisAcesso() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(niveisAcesso);
+}
+
+export async function getNivelAcessoById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(niveisAcesso).where(eq(niveisAcesso.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Clientes
+export async function getAllClientes() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(clientes);
+}
+
+export async function getClienteById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(clientes).where(eq(clientes.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getClienteByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(clientes).where(eq(clientes.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Veículos
+export async function getAllVeiculos() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(veiculos);
+}
+
+export async function getVeiculosByClienteId(clienteId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(veiculos).where(eq(veiculos.clienteId, clienteId));
+}
+
+export async function getVeiculoByPlaca(placa: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(veiculos).where(eq(veiculos.placa, placa)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Ordens de Serviço
+export async function getAllOrdensServico() {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(ordensServico);
+}
+
+export async function getOrdemServicoById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(ordensServico).where(eq(ordensServico.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getOrdensServicoByStatus(status: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(ordensServico).where(eq(ordensServico.status, status));
+}
+
+export async function createOrdemServico(os: InsertOrdemServico) {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Gerar número da OS (formato: OS-YYYYMMDD-XXX)
+  const hoje = new Date();
+  const dataStr = hoje.toISOString().slice(0, 10).replace(/-/g, '');
+  const countResult = await db.select().from(ordensServico);
+  const numeroOs = `OS-${dataStr}-${String(countResult.length + 1).padStart(3, '0')}`;
+
+  const result = await db.insert(ordensServico).values({
+    ...os,
+    numeroOs,
+    status: 'diagnostico',
+    dataEntrada: new Date(),
+  });
+
+  return { id: result[0].insertId, numeroOs };
+}
+
+export async function updateOrdemServicoStatus(id: number, status: string) {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(ordensServico)
+    .set({ status })
+    .where(eq(ordensServico.id, id));
+  
+  return true;
+}

@@ -1,0 +1,91 @@
+# Doctor Auto - Versão Final - TODO
+
+## Fase 1: Configuração Base
+- [x] Configurar projeto base
+- [x] Criar todo.md
+- [ ] Configurar sistema de autenticação com roles (admin, oficina, cliente)
+- [ ] Criar estrutura base de navegação para as três visões
+
+## Fase 1.5: Criar Tabelas Base
+- [x] Criar tabela Empresas
+- [x] Criar tabela Colaboradores
+- [x] Criar tabela Mecânicos
+- [x] Criar tabela Recursos
+- [x] Criar tabela Níveis de Acesso
+
+## Fase 2: Visão da Oficina (Admin) - Interface Web
+- [ ] Tabela de Clientes (cadastro, listagem, edição)
+- [ ] Tabela de Veículos (vinculados aos clientes)
+- [ ] Tabela de Serviços (catálogo de serviços oferecidos)
+- [ ] Tabela de Ordens de Serviço (OS)
+- [ ] Tela de criação de nova OS
+- [ ] Tela de listagem e filtro de OS
+- [ ] Tela de detalhes da OS com status
+- [ ] Gestão de status da OS (aberta, em andamento, aguardando peças, concluída, entregue)
+
+## Fase 3: Visão de Gestão - Dashboards Operacionais
+- [ ] Dashboard principal com métricas (OS abertas, concluídas, faturamento)
+- [ ] Relatórios de produtividade
+- [ ] Relatórios financeiros
+- [ ] Visão de agenda/calendário
+- [ ] Interface responsiva (web e mobile)
+
+## Fase 4: Visão do Cliente - Aplicativo Mobile-First
+- [ ] Tela de login do cliente
+- [ ] Visualização dos veículos do cliente
+- [ ] Acompanhamento de OS em tempo real
+- [ ] Histórico de serviços
+- [ ] Notificações de status
+
+## Fase 5: Integração e Testes
+- [ ] Integrar fluxos entre as três visões
+- [ ] Testar autenticação e autorização por role
+- [ ] Validar responsividade em dispositivos móveis
+- [ ] Testes de usabilidade
+
+## Bugs e Ajustes
+(Adicionar conforme identificados)
+
+## Fase 1.6: Sistema de Login e Autenticação
+- [x] Criar página de login para funcionários (colaboradores)
+- [x] Implementar autenticação via email/senha usando tabela colaboradores
+- [x] Criar rotas protegidas para área admin
+- [x] Criar dashboard inicial da oficina (admin)
+
+## Fase 1.7: Sistema de Senha Padrão
+- [x] Adicionar campo primeiroAcesso na tabela colaboradores
+- [x] Senha padrão inicial: 123456
+- [x] Criar tela de troca de senha obrigatória no primeiro acesso
+- [x] Após trocar senha, marcar primeiroAcesso como false
+
+## Fase 2.1: Conectar Telas com Banco
+- [x] Criar página de visualização de Clientes e Veículos conectada ao banco
+- [x] Conectar todas as páginas admin com dados mock
+
+## Fase 2.2: Refazer Dashboard Admin
+- [x] Criar Dashboard igual à referência com:
+  - [x] Pendências do dia (Thalles, João, Pedro) no topo
+  - [x] 4 abas: Operacional, Financeiro, Produtividade, Agenda
+  - [x] Cards com métricas em cada aba
+  - [x] Sidebar com navegação (Dashboard, Visão Geral, Pátio, Agendamentos, Cadastro, Configurações)
+  - [x] Seletor de empresa no canto superior direito
+
+## Fase 2.3: Criar Tela Operacional
+- [x] Header com abas (Operacional, Financeiro, Produtividade, Agenda, Histórico)
+- [x] Cards de status (Capacidade, Fluxo, Retorno, Fora da Loja)
+- [x] Status Pátio com filtro de consultores
+- [x] 8 cards de status das OS
+- [x] Veículos Atrasados
+- [x] Tempo Médio de Permanência por Etapa (com gargalos)
+- [x] Agenda dos mecânicos do dia (não da semana)
+
+## Ajustes Solicitados
+- [x] Adicionar "Nova OS" no menu lateral entre "Visão Geral" e "Pátio"
+
+## Fase 2.4: Criar Página de Agendamentos
+- [x] Header com título + botão Novo Agendamento (sem Checklist)
+- [x] Cards de estatísticas (Hoje, Aguardando, Do Kommo, Confirmados)
+- [x] Barra de busca + filtros
+- [x] Lista de agendamentos com dados do cliente/veículo
+- [x] Botão "Confirmar Chegada" (em vez de WhatsApp)
+- [x] Ao confirmar chegada: criar OS automaticamente e abrir card no Kanban em Diagnóstico

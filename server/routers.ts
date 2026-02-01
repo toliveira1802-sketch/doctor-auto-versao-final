@@ -1,11 +1,35 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import {
+  getAllColaboradores,
+  getColaboradorByEmail,
+  getColaboradoresByEmpresa,
+  getColaboradorById,
+  updateColaboradorSenha,
+  getAllEmpresas,
+  getEmpresaById,
+  getAllMecanicos,
+  getMecanicosByEmpresa,
+  getAllRecursos,
+  getRecursosByEmpresa,
+  getAllNiveisAcesso,
+  getAllClientes,
+  getClienteById,
+  getVeiculosByClienteId,
+  getAllVeiculos,
+  getAllOrdensServico,
+  getOrdemServicoById,
+  getOrdensServicoByStatus,
+  createOrdemServico,
+  updateOrdemServicoStatus,
+} from "./db";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+  
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -17,12 +41,168 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  // Empresas
+  empresas: router({
+    list: publicProcedure.query(async () => {
+      return await getAllEmpresas();
+    }),
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getEmpresaById(input.id);
+      }),
+  }),
+
+  // Colaboradores
+  colaboradores: router({
+    list: publicProcedure.query(async () => {
+      return await getAllColaboradores();
+    }),
+    getByEmail: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .query(async ({ input }) => {
+        return await getColaboradorByEmail(input.email);
+      }),
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getColaboradorById(input.id);
+      }),
+    getByEmpresa: publicProcedure
+      .input(z.object({ empresaId: z.number() }))
+      .query(async ({ input }) => {
+        return await getColaboradoresByEmpresa(input.empresaId);
+      }),
+    trocarSenha: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        senhaAtual: z.string(),
+        novaSenha: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres"),
+      }))
+      .mutation(async ({ input }) => {
+        // Buscar colaborador
+        const colaborador = await getColaboradorById(input.id);
+        if (!colaborador) {
+          return { success: false, error: "Colaborador não encontrado" };
+        }
+
+        // Verificar senha atual
+        if (colaborador.senha !== input.senhaAtual) {
+          return { success: false, error: "Senha atual incorreta" };
+        }
+
+        // Verificar se nova senha é diferente da atual
+        if (input.senhaAtual === input.novaSenha) {
+          return { success: false, error: "A nova senha deve ser diferente da atual" };
+        }
+
+        // Atualizar senha
+        const updated = await updateColaboradorSenha(input.id, input.novaSenha);
+        if (!updated) {
+          return { success: false, error: "Erro ao atualizar senha" };
+        }
+
+        return { success: true };
+      }),
+  }),
+
+  // Mecânicos
+  mecanicos: router({
+    list: publicProcedure.query(async () => {
+      return await getAllMecanicos();
+    }),
+    getByEmpresa: publicProcedure
+      .input(z.object({ empresaId: z.number() }))
+      .query(async ({ input }) => {
+        return await getMecanicosByEmpresa(input.empresaId);
+      }),
+  }),
+
+  // Recursos
+  recursos: router({
+    list: publicProcedure.query(async () => {
+      return await getAllRecursos();
+    }),
+    getByEmpresa: publicProcedure
+      .input(z.object({ empresaId: z.number() }))
+      .query(async ({ input }) => {
+        return await getRecursosByEmpresa(input.empresaId);
+      }),
+  }),
+
+  // Níveis de Acesso
+  niveisAcesso: router({
+    list: publicProcedure.query(async () => {
+      return await getAllNiveisAcesso();
+    }),
+  }),
+
+  // Clientes
+  clientes: router({
+    list: publicProcedure.query(async () => {
+      return await getAllClientes();
+    }),
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getClienteById(input.id);
+      }),
+  }),
+
+  // Veículos
+  veiculos: router({
+    list: publicProcedure.query(async () => {
+      return await getAllVeiculos();
+    }),
+    getByCliente: publicProcedure
+      .input(z.object({ clienteId: z.number() }))
+      .query(async ({ input }) => {
+        return await getVeiculosByClienteId(input.clienteId);
+      }),
+  }),
+
+  // Ordens de Serviço
+  ordensServico: router({
+    list: publicProcedure.query(async () => {
+      return await getAllOrdensServico();
+    }),
+    getById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getOrdemServicoById(input.id);
+      }),
+    getByStatus: publicProcedure
+      .input(z.object({ status: z.string() }))
+      .query(async ({ input }) => {
+        return await getOrdensServicoByStatus(input.status);
+      }),
+    create: publicProcedure
+      .input(z.object({
+        clienteId: z.number().optional(),
+        veiculoId: z.number().optional(),
+        placa: z.string().optional(),
+        km: z.number().optional(),
+        colaboradorId: z.number().optional(),
+        motivoVisita: z.string().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await createOrdemServico(input);
+        if (!result) {
+          return { success: false, error: "Erro ao criar OS" };
+        }
+        return { success: true, id: result.id, numeroOs: result.numeroOs };
+      }),
+    updateStatus: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const updated = await updateOrdemServicoStatus(input.id, input.status);
+        return { success: updated };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
