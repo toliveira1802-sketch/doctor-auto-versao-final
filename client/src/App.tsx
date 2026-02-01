@@ -30,6 +30,15 @@ import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import AdminPainelTV from "./pages/admin/AdminPainelTV";
 import AdminPendencias from "./pages/admin/AdminPendencias";
 
+// Gestao Pages
+import GestaoDashboards from "./pages/gestao/GestaoDashboards";
+import GestaoRH from "./pages/gestao/GestaoRH";
+import GestaoOperacoes from "./pages/gestao/GestaoOperacoes";
+import GestaoFinanceiro from "./pages/gestao/GestaoFinanceiro";
+import GestaoTecnologia from "./pages/gestao/GestaoTecnologia";
+import GestaoComercial from "./pages/gestao/GestaoComercial";
+import GestaoMelhorias from "./pages/gestao/GestaoMelhorias";
+
 function Router() {
   return (
     <Switch>
@@ -60,6 +69,15 @@ function Router() {
       <Route path={"/admin/configuracoes"} component={AdminConfiguracoes} />
       <Route path={"/admin/painel-tv"} component={AdminPainelTV} />
       <Route path={"/admin/pendencias"} component={AdminPendencias} />
+      
+      {/* Gestao Routes */}
+      <Route path={"/gestao"} component={GestaoDashboards} />
+      <Route path={"/gestao/rh"} component={GestaoRH} />
+      <Route path={"/gestao/operacoes"} component={GestaoOperacoes} />
+      <Route path={"/gestao/financeiro"} component={GestaoFinanceiro} />
+      <Route path={"/gestao/tecnologia"} component={GestaoTecnologia} />
+      <Route path={"/gestao/comercial"} component={GestaoComercial} />
+      <Route path={"/gestao/melhorias"} component={GestaoMelhorias} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

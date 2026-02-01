@@ -18,6 +18,7 @@ import {
   ClipboardList,
   ChevronDown,
   PlusCircle,
+  BarChart3,
 } from "lucide-react";
 import {
   dashboardStatsMock,
@@ -170,6 +171,19 @@ export default function AdminDashboard() {
               Configurações
             </Button>
           </Link>
+          
+          {/* Gestão - visível para Direção e Gestão */}
+          {colaborador && (colaborador.cargo === "Direção" || colaborador.cargo === "Gestão") && (
+            <Link href="/gestao">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 h-9 text-sm border border-amber-500/30 mt-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Gestão
+              </Button>
+            </Link>
+          )}
         </nav>
 
         {/* User Info */}

@@ -102,3 +102,23 @@
 - [x] Criar página de Pendências com lista de consultores
 - [x] Criar modal de Nova Pendência com formulário
 - [ ] Criar tabela de pendências no banco de dados (usando mock por enquanto)
+
+## Atualização Página de Agendamentos
+- [ ] Header com botões "Checklist" e "Novo Agendamento" lado a lado
+- [ ] 4 Cards de estatísticas: Hoje, Aguardando, Do Kommo, Confirmados
+- [ ] Barra de busca com placeholder "Buscar cliente, placa ou v..."
+- [ ] Filtros: Todas origens, Todos status, Filtrar data
+- [ ] Cards de agendamento com nome, badges, data/hora, veículo, placa
+- [ ] Tags de serviços nos cards
+- [ ] Botões: WhatsApp, Reagendar, Cancelar
+
+## Telas de Gestão
+- [x] Criar página principal GestaoDashboards com 6 módulos
+- [x] Criar GestaoRH (Recursos Humanos)
+- [x] Criar GestaoOperacoes
+- [x] Criar GestaoFinanceiro
+- [x] Criar GestaoTecnologia
+- [x] Criar GestaoComercial
+- [x] Criar GestaoMelhorias
+- [x] Adicionar opção Gestão no menu lateral (baseado no cargo)
+- [x] Configurar rotas /gestao/*
