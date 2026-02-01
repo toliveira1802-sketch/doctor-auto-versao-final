@@ -122,3 +122,13 @@
 - [x] Criar GestaoMelhorias
 - [x] Adicionar opção Gestão no menu lateral (baseado no cargo)
 - [x] Configurar rotas /gestao/*
+
+## Correções Pendências e Operacional
+- [x] Dashboard: Botão único "Pendências do dia" (sem nomes)
+- [x] Dashboard: Botão Operacional navegar para /admin/operacional
+- [x] Prime: Consultores Thales (1 L), Pedro, João
+- [x] Página Pendências: Cards com campo descrição
+- [x] Página Pendências: Status = Pendente (padrão), Feito, Feito com ressalvas
+- [x] Página Pendências: Ordem FIFO (mais antigas primeiro)
+- [x] Página Pendências: Filtro por Todos, Thales, Pedro, João
+- [x] Página Pendências: Permissões (consultores só para si, gestão/direção para todos)

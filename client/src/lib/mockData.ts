@@ -25,7 +25,7 @@ export const empresasMock = [
 
 // Colaboradores
 export const colaboradoresMock = [
-  { id: 1, nome: "Thalles", cargo: "Direção", email: "thalles@doctorauto.com", empresaId: 1 },
+  { id: 1, nome: "Thales", cargo: "Direção", email: "thales@doctorauto.com", empresaId: 1 },
   { id: 2, nome: "Sofia", cargo: "Direção", email: "sofia@doctorauto.com", empresaId: 1 },
   { id: 3, nome: "Francisco", cargo: "Gestão", email: "francisco@doctorauto.com", empresaId: 1 },
   { id: 4, nome: "Márcia", cargo: "Gestão", email: "marcia@doctorauto.com", empresaId: 1 },

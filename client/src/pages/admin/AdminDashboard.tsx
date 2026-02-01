@@ -231,26 +231,16 @@ export default function AdminDashboard() {
 
         {/* Content */}
         <div className="flex-1 p-6 overflow-auto">
-          {/* Pendências do dia - Botão clicável que vai para página de pendências */}
+          {/* Pendências do dia - Botão único que vai para página de pendências */}
           <Link href="/admin/pendencias">
             <Card className="bg-[#1a1f26] border-gray-800 mb-6 cursor-pointer hover:bg-[#252b33] transition-colors">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <h2 className="text-white font-medium">Pendências do dia</h2>
                   </div>
                   <ChevronRight className="h-5 w-5 text-gray-400" />
-                </div>
-                <div className="flex gap-4">
-                  {equipeConsultores.map((consultor) => (
-                    <div key={consultor.id} className="flex items-center gap-2 bg-[#252b33] rounded-lg px-3 py-2">
-                      <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                        <Users className="h-4 w-4 text-gray-300" />
-                      </div>
-                      <span className="text-white text-sm">{consultor.nome}</span>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -259,11 +249,16 @@ export default function AdminDashboard() {
           {/* Tabs: Operacional, Financeiro, Produtividade, Agenda */}
           <Tabs defaultValue="operacional" className="w-full">
             <TabsList className="bg-transparent border-b border-gray-800 w-full justify-start rounded-none h-auto p-0 mb-6">
+              <Link href="/admin/operacional">
+                <div className="flex items-center px-4 py-3 text-gray-400 hover:text-blue-400 cursor-pointer">
+                  <Wrench className="h-4 w-4 mr-2" />
+                  Operacional
+                </div>
+              </Link>
               <TabsTrigger 
                 value="operacional" 
-                className="data-[state=active]:bg-transparent data-[state=active]:text-blue-400 data-[state=active]:border-b-2 data-[state=active]:border-blue-400 rounded-none px-4 py-3 text-gray-400"
+                className="hidden"
               >
-                <Wrench className="h-4 w-4 mr-2" />
                 Operacional
               </TabsTrigger>
               <TabsTrigger 
