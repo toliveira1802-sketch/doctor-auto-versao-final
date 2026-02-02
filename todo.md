@@ -269,3 +269,15 @@
 ### 🔵 ESTRUTURAL
 - [x] Criar link "Ordens Itens Serviço" dentro de Cadastros (já existe no menu)
 - [ ] Revisar estrutura de rotas para evitar redirects indevidos
+
+## Renomear Tabelas e Importar Dados
+- [x] Renomear ordens_servico → 09_ordens_servico
+- [x] Renomear ordens_servico_itens → 11_ordens_servico_itens
+- [x] Renomear clientes → 07_clientes
+- [x] Renomear veiculos → 08_veiculos
+- [x] Criar tabela 10_ordens_servico_historico
+- [x] Criar tabela 12_agendamentos
+- [x] Criar tabela 95_faturamento
+- [ ] Importar dados de 07_clientes.xlsx (arquivo contém veículos, não clientes)
+- [ ] Importar dados de 08_veiculos.xlsx (arquivo contém veículos)
+- [x] Gerar relatório de regras de cadastro (RELATORIO_REGRAS_CADASTRO.md)
