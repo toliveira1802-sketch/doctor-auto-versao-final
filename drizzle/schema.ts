@@ -176,6 +176,9 @@ export const ordensServico = mysqlTable("ordens_servico", {
   id: int("id").autoincrement().primaryKey(),
   numeroOs: varchar("numeroOs", { length: 20 }),
   dataEntrada: timestamp("dataEntrada").defaultNow(),
+  dataOrcamento: timestamp("dataOrcamento"),
+  dataAprovacao: timestamp("dataAprovacao"),
+  dataConclusao: timestamp("dataConclusao"),
   dataSaida: timestamp("dataSaida"),
   clienteId: int("clienteId"),
   veiculoId: int("veiculoId"),
@@ -187,10 +190,15 @@ export const ordensServico = mysqlTable("ordens_servico", {
   recursoId: int("recursoId"),
   veioDePromocao: boolean("veioDePromocao").default(false),
   motivoVisita: varchar("motivoVisita", { length: 255 }),
+  descricaoProblema: text("descricaoProblema"),
+  diagnostico: text("diagnostico"),
   totalOrcamento: decimal("totalOrcamento", { precision: 10, scale: 2 }).default("0"),
+  valorAprovado: decimal("valorAprovado", { precision: 10, scale: 2 }).default("0"),
   valorTotalOs: decimal("valorTotalOs", { precision: 10, scale: 2 }).default("0"),
   primeiraVez: boolean("primeiraVez").default(true),
   observacoes: text("observacoes"),
+  motivoRecusa: text("motivoRecusa"),
+  googleDriveLink: varchar("googleDriveLink", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -250,11 +258,16 @@ export type InsertOrdemServicoHistorico = typeof ordensServicoHistorico.$inferIn
 export const ordensServicoItens = mysqlTable("ordens_servico_itens", {
   id: int("id").autoincrement().primaryKey(),
   ordemServicoId: int("ordemServicoId").notNull(),
-  tipo: varchar("tipo", { length: 50 }), // Peça, Serviço, Mão de Obra
+  tipo: varchar("tipo", { length: 50 }), // peca, mao_de_obra
   descricao: varchar("descricao", { length: 500 }),
   quantidade: int("quantidade").default(1),
+  valorCusto: decimal("valorCusto", { precision: 10, scale: 2 }).default("0"),
+  margemAplicada: decimal("margemAplicada", { precision: 5, scale: 2 }).default("0"),
   valorUnitario: decimal("valorUnitario", { precision: 10, scale: 2 }).default("0"),
   valorTotal: decimal("valorTotal", { precision: 10, scale: 2 }).default("0"),
+  prioridade: varchar("prioridade", { length: 20 }).default("verde"), // verde, amarelo, vermelho
+  status: varchar("status", { length: 20 }).default("pendente"), // pendente, aprovado, recusado
+  motivoRecusa: text("motivoRecusa"),
   aprovado: boolean("aprovado").default(false),
   executado: boolean("executado").default(false),
   mecanicoId: int("mecanicoId"),

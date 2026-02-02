@@ -173,3 +173,11 @@
 - [x] Analisar AdminOrdensServico.tsx do repositório antigo
 - [x] Adaptar AdminOSDetalhes para visão da oficina (com itens, prioridades, checklist, etc)
 - [x] Testar funcionamento - Página AdminOSDetalhes com visão admin completa funcionando
+
+## Passo 1-2-3: Banco + AdminOrdensServico + Fluxo Nova OS
+- [x] Criar tabelas: ordens_servico e os_itens no banco (campos extras adicionados)
+- [x] Criar procedures tRPC para CRUD de OS
+- [x] Conectar AdminOSDetalhes com banco real
+- [x] Adaptar AdminOrdensServico com layout completo (tabs, stats, tabela)
+- [x] Fluxo Nova OS → redirecionar para AdminOSDetalhes após criar
+- [x] Testar funcionamento completo - OS criada e redirecionada para AdminOSDetalhes

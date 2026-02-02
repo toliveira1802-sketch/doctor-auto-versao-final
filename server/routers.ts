@@ -25,6 +25,13 @@ import {
   getOrdensServicoByStatus,
   createOrdemServico,
   updateOrdemServicoStatus,
+  getOrdemServicoCompleta,
+  updateOrdemServico,
+  getItensOrdemServico,
+  createItemOrdemServico,
+  updateItemOrdemServico,
+  deleteItemOrdemServico,
+  getCrmByClienteId,
 } from "./db";
 
 export const appRouter = router({
@@ -80,28 +87,20 @@ export const appRouter = router({
         novaSenha: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres"),
       }))
       .mutation(async ({ input }) => {
-        // Buscar colaborador
         const colaborador = await getColaboradorById(input.id);
         if (!colaborador) {
           return { success: false, error: "Colaborador não encontrado" };
         }
-
-        // Verificar senha atual
         if (colaborador.senha !== input.senhaAtual) {
           return { success: false, error: "Senha atual incorreta" };
         }
-
-        // Verificar se nova senha é diferente da atual
         if (input.senhaAtual === input.novaSenha) {
           return { success: false, error: "A nova senha deve ser diferente da atual" };
         }
-
-        // Atualizar senha
         const updated = await updateColaboradorSenha(input.id, input.novaSenha);
         if (!updated) {
           return { success: false, error: "Erro ao atualizar senha" };
         }
-
         return { success: true };
       }),
   }),
@@ -161,6 +160,15 @@ export const appRouter = router({
       }),
   }),
 
+  // CRM / Fidelidade
+  crm: router({
+    getByCliente: publicProcedure
+      .input(z.object({ clienteId: z.number() }))
+      .query(async ({ input }) => {
+        return await getCrmByClienteId(input.clienteId);
+      }),
+  }),
+
   // Ordens de Serviço
   ordensServico: router({
     list: publicProcedure.query(async () => {
@@ -170,6 +178,11 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return await getOrdemServicoById(input.id);
+      }),
+    getCompleta: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await getOrdemServicoCompleta(input.id);
       }),
     getByStatus: publicProcedure
       .input(z.object({ status: z.string() }))
@@ -184,6 +197,7 @@ export const appRouter = router({
         km: z.number().optional(),
         colaboradorId: z.number().optional(),
         motivoVisita: z.string().optional(),
+        descricaoProblema: z.string().optional(),
         observacoes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
@@ -193,6 +207,30 @@ export const appRouter = router({
         }
         return { success: true, id: result.id, numeroOs: result.numeroOs };
       }),
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.string().optional(),
+        descricaoProblema: z.string().optional(),
+        diagnostico: z.string().optional(),
+        observacoes: z.string().optional(),
+        motivoRecusa: z.string().optional(),
+        dataOrcamento: z.date().optional(),
+        dataAprovacao: z.date().optional(),
+        dataConclusao: z.date().optional(),
+        dataSaida: z.date().optional(),
+        valorAprovado: z.string().optional(),
+        totalOrcamento: z.string().optional(),
+        valorTotalOs: z.string().optional(),
+        googleDriveLink: z.string().optional(),
+        mecanicoId: z.number().optional(),
+        recursoId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        const updated = await updateOrdemServico(id, data);
+        return { success: updated };
+      }),
     updateStatus: publicProcedure
       .input(z.object({
         id: z.number(),
@@ -200,6 +238,77 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const updated = await updateOrdemServicoStatus(input.id, input.status);
+        return { success: updated };
+      }),
+  }),
+
+  // Itens da OS
+  osItens: router({
+    list: publicProcedure
+      .input(z.object({ ordemServicoId: z.number() }))
+      .query(async ({ input }) => {
+        return await getItensOrdemServico(input.ordemServicoId);
+      }),
+    create: publicProcedure
+      .input(z.object({
+        ordemServicoId: z.number(),
+        tipo: z.string().optional(),
+        descricao: z.string().optional(),
+        quantidade: z.number().optional(),
+        valorCusto: z.string().optional(),
+        margemAplicada: z.string().optional(),
+        valorUnitario: z.string().optional(),
+        valorTotal: z.string().optional(),
+        prioridade: z.string().optional(),
+        status: z.string().optional(),
+        mecanicoId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await createItemOrdemServico(input);
+        if (!result) {
+          return { success: false, error: "Erro ao criar item" };
+        }
+        return { success: true, id: result.id };
+      }),
+    update: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        tipo: z.string().optional(),
+        descricao: z.string().optional(),
+        quantidade: z.number().optional(),
+        valorCusto: z.string().optional(),
+        margemAplicada: z.string().optional(),
+        valorUnitario: z.string().optional(),
+        valorTotal: z.string().optional(),
+        prioridade: z.string().optional(),
+        status: z.string().optional(),
+        motivoRecusa: z.string().optional(),
+        aprovado: z.boolean().optional(),
+        executado: z.boolean().optional(),
+        mecanicoId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        const updated = await updateItemOrdemServico(id, data);
+        return { success: updated };
+      }),
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const deleted = await deleteItemOrdemServico(input.id);
+        return { success: deleted };
+      }),
+    updateStatus: publicProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.string(),
+        motivoRecusa: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, status, motivoRecusa } = input;
+        const data: any = { status, aprovado: status === 'aprovado' };
+        if (motivoRecusa) data.motivoRecusa = motivoRecusa;
+        const updated = await updateItemOrdemServico(id, data);
         return { success: updated };
       }),
   }),

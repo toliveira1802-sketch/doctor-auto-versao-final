@@ -5,16 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, Search, Car, User, UserPlus } from "lucide-react";
-import { clientesMock, veiculosMock } from "@/lib/mockData";
+import { ArrowLeft, Plus, Search, Car, User, UserPlus, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 export default function AdminNovaOS() {
   const [, setLocation] = useLocation();
   const [searchCliente, setSearchCliente] = useState("");
-  const [clienteSelecionado, setClienteSelecionado] = useState<typeof clientesMock[0] | null>(null);
-  const [veiculoSelecionado, setVeiculoSelecionado] = useState<typeof veiculosMock[0] | null>(null);
+  const [clienteSelecionado, setClienteSelecionado] = useState<any | null>(null);
+  const [veiculoSelecionado, setVeiculoSelecionado] = useState<any | null>(null);
   const [motivoVisita, setMotivoVisita] = useState("");
+  const [descricaoProblema, setDescricaoProblema] = useState("");
   const [km, setKm] = useState("");
   const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [novoCliente, setNovoCliente] = useState({
@@ -22,7 +23,6 @@ export default function AdminNovaOS() {
     telefone: "",
     placa: "",
     veiculo: "",
-    // Campos opcionais
     cpf: "",
     email: "",
     marca: "",
@@ -30,25 +30,54 @@ export default function AdminNovaOS() {
   });
   const [showCamposOpcionais, setShowCamposOpcionais] = useState(false);
 
-  const clientesFiltrados = clientesMock.filter(c => 
-    c.nomeCompleto.toLowerCase().includes(searchCliente.toLowerCase()) ||
-    c.cpf.includes(searchCliente) ||
-    c.telefone.includes(searchCliente)
+  // tRPC queries
+  const { data: clientes = [], isLoading: loadingClientes } = trpc.clientes.list.useQuery();
+  const { data: veiculos = [], isLoading: loadingVeiculos } = trpc.veiculos.list.useQuery();
+
+  // tRPC mutation
+  const createOSMutation = trpc.ordensServico.create.useMutation({
+    onSuccess: (data) => {
+      if (data.success && data.id) {
+        toast.success(`OS ${data.numeroOs} criada com sucesso!`);
+        setLocation(`/admin/os/${data.id}`);
+      } else {
+        toast.error(data.error || "Erro ao criar OS");
+      }
+    },
+    onError: () => {
+      toast.error("Erro ao criar OS");
+    },
+  });
+
+  const clientesFiltrados = clientes.filter(c => 
+    (c.nomeCompleto?.toLowerCase() || "").includes(searchCliente.toLowerCase()) ||
+    (c.cpf || "").includes(searchCliente) ||
+    (c.telefone || "").includes(searchCliente)
   );
 
   const veiculosDoCliente = clienteSelecionado 
-    ? veiculosMock.filter(v => v.clienteId === clienteSelecionado.id)
+    ? veiculos.filter(v => v.clienteId === clienteSelecionado.id)
     : [];
 
   const handleCriarOS = () => {
-    if (!clienteSelecionado || !veiculoSelecionado) {
-      toast.error("Selecione um cliente e um veículo");
+    if (!clienteSelecionado && !showNovoCliente) {
+      toast.error("Selecione um cliente ou crie um novo");
       return;
     }
-    // Gera um ID temporário para a OS (em produção viria do banco)
-    const novaOsId = Date.now();
-    toast.success("OS criada com sucesso!");
-    setLocation(`/admin/os-ultimate/${novaOsId}`);
+    
+    if (clienteSelecionado && !veiculoSelecionado) {
+      toast.error("Selecione um veículo");
+      return;
+    }
+
+    createOSMutation.mutate({
+      clienteId: clienteSelecionado?.id,
+      veiculoId: veiculoSelecionado?.id,
+      placa: veiculoSelecionado?.placa || novoCliente.placa,
+      km: km ? parseInt(km) : undefined,
+      motivoVisita: motivoVisita,
+      descricaoProblema: descricaoProblema,
+    });
   };
 
   const handleCriarNovoCliente = () => {
@@ -56,13 +85,18 @@ export default function AdminNovaOS() {
       toast.error("Preencha os campos obrigatórios: Nome, Telefone, Placa e Veículo");
       return;
     }
-    toast.success("Cliente e veículo criados com sucesso!");
-    setShowNovoCliente(false);
-    // Aqui você conectaria com o backend para criar o cliente e veículo
+    // Por enquanto, criar OS diretamente com os dados do novo cliente
+    createOSMutation.mutate({
+      placa: novoCliente.placa,
+      km: km ? parseInt(km) : undefined,
+      motivoVisita: motivoVisita,
+      descricaoProblema: descricaoProblema,
+      observacoes: `Novo cliente: ${novoCliente.nome} - ${novoCliente.telefone} - ${novoCliente.veiculo}`,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/admin/ordens-servico">
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
@@ -74,13 +108,13 @@ export default function AdminNovaOS() {
             <Plus className="w-6 h-6 text-red-500" />
             Nova Ordem de Serviço
           </h1>
-          <p className="text-gray-400">Criar uma nova OS</p>
+          <p className="text-slate-400">Criar uma nova OS</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 max-w-4xl">
         {/* Card unificado: Cliente e Veículos */}
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-slate-900/50 border-slate-800">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-white flex items-center gap-2">
               <User className="h-5 w-5 text-blue-400" />
@@ -89,262 +123,274 @@ export default function AdminNovaOS() {
             <Button 
               variant="outline" 
               className="border-green-500 text-green-500 hover:bg-green-500/10"
-              onClick={() => setShowNovoCliente(!showNovoCliente)}
+              onClick={() => {
+                setShowNovoCliente(!showNovoCliente);
+                if (!showNovoCliente) {
+                  setClienteSelecionado(null);
+                  setVeiculoSelecionado(null);
+                }
+              }}
             >
               <UserPlus className="h-4 w-4 mr-2" />
-              Adicionar Novo Cliente
+              {showNovoCliente ? "Selecionar Existente" : "Novo Cliente"}
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Formulário de Novo Cliente */}
-            {showNovoCliente && (
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
+            {showNovoCliente ? (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
                 <h3 className="text-green-400 font-semibold mb-4 flex items-center gap-2">
                   <UserPlus className="h-4 w-4" />
                   Novo Cliente
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-gray-400">Nome *</Label>
+                    <Label className="text-slate-400">Nome *</Label>
                     <Input
                       placeholder="Nome do cliente"
                       value={novoCliente.nome}
                       onChange={(e) => setNovoCliente({...novoCliente, nome: e.target.value})}
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-slate-800 border-slate-700 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-400">Telefone *</Label>
+                    <Label className="text-slate-400">Telefone *</Label>
                     <Input
                       placeholder="(11) 99999-9999"
                       value={novoCliente.telefone}
                       onChange={(e) => setNovoCliente({...novoCliente, telefone: e.target.value})}
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-slate-800 border-slate-700 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-400">Placa *</Label>
+                    <Label className="text-slate-400">Placa *</Label>
                     <Input
                       placeholder="ABC-1234"
                       value={novoCliente.placa}
                       onChange={(e) => setNovoCliente({...novoCliente, placa: e.target.value.toUpperCase()})}
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-slate-800 border-slate-700 text-white"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-gray-400">Veículo *</Label>
+                    <Label className="text-slate-400">Veículo *</Label>
                     <Input
                       placeholder="Ex: VW Golf GTI 2020"
                       value={novoCliente.veiculo}
                       onChange={(e) => setNovoCliente({...novoCliente, veiculo: e.target.value})}
-                      className="bg-white/5 border-white/10 text-white"
+                      className="bg-slate-800 border-slate-700 text-white"
                     />
                   </div>
                 </div>
                 
-                {/* Botão para mostrar campos opcionais */}
                 <button
                   type="button"
                   onClick={() => setShowCamposOpcionais(!showCamposOpcionais)}
-                  className="text-blue-400 text-sm hover:underline mt-2 flex items-center gap-1"
+                  className="text-blue-400 text-sm hover:underline mt-4 flex items-center gap-1"
                 >
-                  {showCamposOpcionais ? '▼ Ocultar campos opcionais' : '▶ Mostrar campos opcionais (CPF, Email, Marca, Ano)'}
+                  {showCamposOpcionais ? '▼ Ocultar campos opcionais' : '▶ Mostrar campos opcionais'}
                 </button>
 
-                {/* Campos opcionais */}
                 {showCamposOpcionais && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-white/10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-slate-700">
                     <div className="space-y-2">
-                      <Label className="text-gray-400">CPF</Label>
+                      <Label className="text-slate-400">CPF</Label>
                       <Input
                         placeholder="000.000.000-00"
                         value={novoCliente.cpf}
                         onChange={(e) => setNovoCliente({...novoCliente, cpf: e.target.value})}
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-slate-800 border-slate-700 text-white"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-gray-400">Email</Label>
+                      <Label className="text-slate-400">Email</Label>
                       <Input
                         placeholder="email@exemplo.com"
                         value={novoCliente.email}
                         onChange={(e) => setNovoCliente({...novoCliente, email: e.target.value})}
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-slate-800 border-slate-700 text-white"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-gray-400">Marca</Label>
+                      <Label className="text-slate-400">Marca</Label>
                       <Input
                         placeholder="Ex: Volkswagen"
                         value={novoCliente.marca}
                         onChange={(e) => setNovoCliente({...novoCliente, marca: e.target.value})}
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-slate-800 border-slate-700 text-white"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-gray-400">Ano</Label>
+                      <Label className="text-slate-400">Ano</Label>
                       <Input
                         placeholder="Ex: 2020"
                         value={novoCliente.ano}
                         onChange={(e) => setNovoCliente({...novoCliente, ano: e.target.value})}
-                        className="bg-white/5 border-white/10 text-white"
+                        className="bg-slate-800 border-slate-700 text-white"
                       />
                     </div>
                   </div>
                 )}
-
-                <div className="flex gap-2 mt-4">
-                  <Button 
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={handleCriarNovoCliente}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Salvar Cliente
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    className="text-gray-400 hover:text-white"
-                    onClick={() => setShowNovoCliente(false)}
-                  >
-                    Cancelar
-                  </Button>
+              </div>
+            ) : (
+              <>
+                {/* Busca de Cliente */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Buscar por nome, CPF ou telefone..."
+                    value={searchCliente}
+                    onChange={(e) => setSearchCliente(e.target.value)}
+                    className="pl-10 bg-slate-800 border-slate-700 text-white"
+                  />
                 </div>
-              </div>
-            )}
 
-            {/* Busca e seleção de cliente */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Buscar cliente por nome, CPF ou telefone..."
-                value={searchCliente}
-                onChange={(e) => setSearchCliente(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10 text-white"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Lista de Clientes - só mostra quando tem busca */}
-              <div>
-                <h4 className="text-gray-400 text-sm mb-2 flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Clientes
-                </h4>
-                {searchCliente.length === 0 ? (
-                  <div className="bg-white/5 rounded-lg p-8 text-center">
-                    <p className="text-gray-400">Digite para buscar um cliente</p>
-                  </div>
-                ) : clientesFiltrados.length === 0 ? (
-                  <div className="bg-white/5 rounded-lg p-8 text-center">
-                    <p className="text-gray-400">Nenhum cliente encontrado</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {clientesFiltrados.map((cliente) => (
-                      <div
-                        key={cliente.id}
-                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                          clienteSelecionado?.id === cliente.id 
-                            ? "bg-red-500/20 border border-red-500" 
-                            : "bg-white/5 hover:bg-white/10"
-                        }`}
-                        onClick={() => {
-                          setClienteSelecionado(cliente);
-                          setVeiculoSelecionado(null);
-                        }}
-                      >
-                        <p className="text-white font-medium">{cliente.nomeCompleto}</p>
-                        <p className="text-gray-400 text-sm">{cliente.cpf} • {cliente.telefone}</p>
+                {/* Lista de Clientes */}
+                {searchCliente && (
+                  <div className="max-h-48 overflow-y-auto space-y-2">
+                    {loadingClientes ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
                       </div>
-                    ))}
+                    ) : clientesFiltrados.length === 0 ? (
+                      <p className="text-slate-400 text-center py-4">Nenhum cliente encontrado</p>
+                    ) : (
+                      clientesFiltrados.slice(0, 5).map((cliente) => (
+                        <div
+                          key={cliente.id}
+                          onClick={() => {
+                            setClienteSelecionado(cliente);
+                            setSearchCliente("");
+                            setVeiculoSelecionado(null);
+                          }}
+                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                            clienteSelecionado?.id === cliente.id
+                              ? "bg-blue-500/20 border border-blue-500/50"
+                              : "bg-slate-800/50 hover:bg-slate-800"
+                          }`}
+                        >
+                          <p className="font-medium text-white">{cliente.nomeCompleto}</p>
+                          <p className="text-sm text-slate-400">{cliente.telefone} • {cliente.cpf}</p>
+                        </div>
+                      ))
+                    )}
                   </div>
                 )}
-              </div>
 
-              {/* Lista de Veículos do Cliente */}
-              <div>
-                <h4 className="text-gray-400 text-sm mb-2 flex items-center gap-2">
-                  <Car className="h-4 w-4" />
-                  Veículos do Cliente
-                </h4>
-                {!clienteSelecionado ? (
-                  <div className="bg-white/5 rounded-lg p-8 text-center">
-                    <p className="text-gray-400">Selecione um cliente primeiro</p>
-                  </div>
-                ) : veiculosDoCliente.length === 0 ? (
-                  <div className="bg-white/5 rounded-lg p-8 text-center">
-                    <p className="text-gray-400">Cliente não possui veículos cadastrados</p>
-                    <Button variant="outline" className="mt-4 border-blue-500 text-blue-500">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Veículo
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {veiculosDoCliente.map((veiculo) => (
-                      <div
-                        key={veiculo.id}
-                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                          veiculoSelecionado?.id === veiculo.id 
-                            ? "bg-red-500/20 border border-red-500" 
-                            : "bg-white/5 hover:bg-white/10"
-                        }`}
-                        onClick={() => setVeiculoSelecionado(veiculo)}
-                      >
-                        <p className="text-white font-bold">{veiculo.placa}</p>
-                        <p className="text-gray-400">{veiculo.marca} {veiculo.modelo}</p>
-                        <p className="text-gray-500 text-sm">{veiculo.ano} • {veiculo.kmAtual.toLocaleString("pt-BR")} km</p>
+                {/* Cliente Selecionado */}
+                {clienteSelecionado && (
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-white">{clienteSelecionado.nomeCompleto}</p>
+                        <p className="text-sm text-slate-400">{clienteSelecionado.telefone}</p>
                       </div>
-                    ))}
+                      <Check className="w-5 h-5 text-blue-400" />
+                    </div>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Resumo da Seleção */}
-            {clienteSelecionado && veiculoSelecionado && (
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mt-4">
-                <p className="text-green-400 font-semibold">Selecionado:</p>
-                <p className="text-white">{clienteSelecionado.nomeCompleto} • {veiculoSelecionado.placa} - {veiculoSelecionado.marca} {veiculoSelecionado.modelo}</p>
-              </div>
+                {/* Veículos do Cliente */}
+                {clienteSelecionado && (
+                  <div className="space-y-2">
+                    <Label className="text-slate-400">Veículos do Cliente</Label>
+                    {loadingVeiculos ? (
+                      <div className="flex items-center justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+                      </div>
+                    ) : veiculosDoCliente.length === 0 ? (
+                      <p className="text-slate-400 text-center py-4">Nenhum veículo cadastrado</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {veiculosDoCliente.map((veiculo) => (
+                          <div
+                            key={veiculo.id}
+                            onClick={() => setVeiculoSelecionado(veiculo)}
+                            className={`p-3 rounded-lg cursor-pointer transition-colors flex items-center gap-3 ${
+                              veiculoSelecionado?.id === veiculo.id
+                                ? "bg-green-500/20 border border-green-500/50"
+                                : "bg-slate-800/50 hover:bg-slate-800"
+                            }`}
+                          >
+                            <Car className="w-5 h-5 text-slate-400" />
+                            <div>
+                              <p className="font-medium text-white">{veiculo.marca} {veiculo.modelo}</p>
+                              <p className="text-sm text-slate-400 font-mono">{veiculo.placa}</p>
+                            </div>
+                            {veiculoSelecionado?.id === veiculo.id && (
+                              <Check className="w-5 h-5 text-green-400 ml-auto" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
 
-        {/* Dados da OS */}
-        <Card className="bg-white/5 border-white/10">
+        {/* Informações da OS */}
+        <Card className="bg-slate-900/50 border-slate-800">
           <CardHeader>
-            <CardTitle className="text-white">Dados da OS</CardTitle>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Car className="h-5 w-5 text-orange-400" />
+              Informações da OS
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-gray-400">KM Atual</Label>
-              <Input
-                type="number"
-                placeholder="Ex: 125000"
-                value={km}
-                onChange={(e) => setKm(e.target.value)}
-                className="bg-white/5 border-white/10 text-white"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-slate-400">KM Atual</Label>
+                <Input
+                  placeholder="Ex: 85420"
+                  value={km}
+                  onChange={(e) => setKm(e.target.value.replace(/\D/g, ''))}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-slate-400">Motivo da Visita</Label>
+                <Input
+                  placeholder="Ex: Revisão, Troca de óleo, etc."
+                  value={motivoVisita}
+                  onChange={(e) => setMotivoVisita(e.target.value)}
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-gray-400">Motivo da Visita</Label>
+              <Label className="text-slate-400">Descrição do Problema</Label>
               <Textarea
-                placeholder="Descreva o motivo da visita..."
-                value={motivoVisita}
-                onChange={(e) => setMotivoVisita(e.target.value)}
-                className="bg-white/5 border-white/10 text-white min-h-24"
+                placeholder="Descreva o problema relatado pelo cliente..."
+                value={descricaoProblema}
+                onChange={(e) => setDescricaoProblema(e.target.value)}
+                className="bg-slate-800 border-slate-700 text-white min-h-[100px]"
               />
             </div>
-            <Button 
-              className="w-full bg-red-600 hover:bg-red-700"
-              onClick={handleCriarOS}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Ordem de Serviço
-            </Button>
           </CardContent>
         </Card>
+
+        {/* Botão de Criar */}
+        <div className="flex justify-end gap-4">
+          <Link href="/admin/ordens-servico">
+            <Button variant="outline" className="border-slate-700 text-white hover:bg-slate-800">
+              Cancelar
+            </Button>
+          </Link>
+          <Button 
+            className="bg-red-600 hover:bg-red-700"
+            onClick={showNovoCliente ? handleCriarNovoCliente : handleCriarOS}
+            disabled={createOSMutation.isPending}
+          >
+            {createOSMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            Criar OS
+          </Button>
+        </div>
       </div>
     </div>
   );

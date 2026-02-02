@@ -1,17 +1,15 @@
-import { useState } from "react";
-import { useParams, useLocation, Link } from "wouter";
+import { useState, useEffect } from "react";
+import { useParams, useLocation } from "wouter";
 import { 
   ArrowLeft, Save, Plus, Trash2, Phone, Car, User, 
   Calendar, DollarSign, FileText, Wrench, CheckCircle,
   XCircle, AlertTriangle, Clock, Loader2, Edit2,
-  ClipboardCheck, Camera, ChevronDown, ChevronUp, Gauge, ShieldCheck, Activity, Image,
-  TrendingUp, Sparkles, Calculator, Gift, Video, Zap, Send, Download,
-  MessageSquare, Crown, Award, Medal, Star, Scan, RefreshCw, Lightbulb, Copy
+  ClipboardCheck, Camera, ChevronDown, ChevronUp,
+  Send, Download, Crown, Award, Medal, Star, Copy
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
@@ -34,45 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-interface OrdemServicoItem {
-  id: string;
-  descricao: string;
-  tipo: string;
-  quantidade: number;
-  valor_unitario: number;
-  valor_total: number;
-  status: string;
-  motivo_recusa: string | null;
-  valor_custo: number | null;
-  margem_aplicada: number | null;
-  prioridade: 'verde' | 'amarelo' | 'vermelho' | null;
-}
-
-interface OrdemServico {
-  id: string;
-  numero_os: string;
-  plate: string;
-  vehicle: string;
-  client_name: string | null;
-  client_phone: string | null;
-  status: string;
-  data_entrada: string | null;
-  data_orcamento: string | null;
-  data_aprovacao: string | null;
-  data_conclusao: string | null;
-  data_entrega: string | null;
-  valor_orcado: number | null;
-  valor_aprovado: number | null;
-  valor_final: number | null;
-  descricao_problema: string | null;
-  diagnostico: string | null;
-  observacoes: string | null;
-  motivo_recusa: string | null;
-  mechanic_id: string | null;
-  km_atual: string | null;
-  google_drive_link?: string | null;
-}
+import { trpc } from "@/lib/trpc";
 
 // Configuração de prioridade/criticidade
 const prioridadeConfig: Record<string, { label: string; borderColor: string; bgColor: string }> = {
@@ -106,50 +66,14 @@ const itemStatusConfig: Record<string, { label: string; color: string }> = {
   recusado: { label: "Recusado", color: "bg-red-500/10 text-red-600 border-red-500/20" },
 };
 
-// Mock data
-const mockOS: OrdemServico = {
-  id: "1",
-  numero_os: "OS-2026-0042",
-  plate: "ABC-1D34",
-  vehicle: "Honda Civic EXL 2.0",
-  client_name: "João Silva Santos",
-  client_phone: "(11) 98765-4321",
-  status: "em_execucao",
-  data_entrada: "2026-01-28T09:00:00",
-  data_orcamento: "2026-01-28T14:00:00",
-  data_aprovacao: "2026-01-29T10:00:00",
-  data_conclusao: null,
-  data_entrega: null,
-  valor_orcado: 4050.00,
-  valor_aprovado: 3850.00,
-  valor_final: null,
-  descricao_problema: "Cliente relata ruído no motor ao acelerar e perda de potência em subidas.",
-  diagnostico: "Após análise, identificado problema no sistema de injeção e necessidade de limpeza dos bicos injetores. Sensor MAP apresentando leituras incorretas.",
-  observacoes: "Cliente prefere peças originais",
-  motivo_recusa: null,
-  mechanic_id: "1",
-  km_atual: "85.420",
-  google_drive_link: null
-};
-
-const mockItens: OrdemServicoItem[] = [
-  { id: "1", descricao: "Limpeza de bicos injetores", tipo: "mao_de_obra", quantidade: 1, valor_unitario: 350.00, valor_total: 350.00, status: "aprovado", motivo_recusa: null, valor_custo: null, margem_aplicada: null, prioridade: "amarelo" },
-  { id: "2", descricao: "Troca do sensor MAP", tipo: "peca", quantidade: 1, valor_unitario: 480.00, valor_total: 480.00, status: "aprovado", motivo_recusa: null, valor_custo: 280.00, margem_aplicada: 71, prioridade: "vermelho" },
-  { id: "3", descricao: "Troca de velas NGK", tipo: "peca", quantidade: 4, valor_unitario: 70.00, valor_total: 280.00, status: "aprovado", motivo_recusa: null, valor_custo: 40.00, margem_aplicada: 75, prioridade: "verde" },
-  { id: "4", descricao: "Revisão sistema de ignição", tipo: "mao_de_obra", quantidade: 1, valor_unitario: 420.00, valor_total: 420.00, status: "pendente", motivo_recusa: null, valor_custo: null, margem_aplicada: null, prioridade: "amarelo" },
-  { id: "5", descricao: "Teste em dinamômetro", tipo: "mao_de_obra", quantidade: 1, valor_unitario: 180.00, valor_total: 180.00, status: "pendente", motivo_recusa: null, valor_custo: null, margem_aplicada: null, prioridade: "verde" },
-  { id: "6", descricao: "Troca óleo motor sintético", tipo: "peca", quantidade: 1, valor_unitario: 340.00, valor_total: 340.00, status: "recusado", motivo_recusa: "Cliente vai trocar em outro lugar", valor_custo: 180.00, margem_aplicada: 89, prioridade: "verde" },
-];
-
 export default function AdminOSDetalhes() {
   const params = useParams<{ id: string }>();
-  const osId = params.id;
+  const osId = Number(params.id);
   const [, setLocation] = useLocation();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [editedOS, setEditedOS] = useState<Partial<OrdemServico>>({});
+  const [editedOS, setEditedOS] = useState<Record<string, any>>({});
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
-  const [itens, setItens] = useState<OrdemServicoItem[]>(mockItens);
   const [newItem, setNewItem] = useState({
     descricao: "",
     tipo: "peca",
@@ -162,34 +86,83 @@ export default function AdminOSDetalhes() {
   
   // Collapsible sections
   const [checklistOpen, setChecklistOpen] = useState(false);
-  const [fotosOpen, setFotosOpen] = useState(false);
   const [servicosOpen, setServicosOpen] = useState(true);
-  
-  // Client loyalty level
-  const [clientLoyaltyLevel] = useState<'bronze' | 'prata' | 'ouro' | 'diamante'>('ouro');
   
   // Checklist states
   const [checklistEntrada, setChecklistEntrada] = useState<Record<string, boolean>>({
-    nivelOleo: true,
-    nivelAgua: true,
-    freios: true,
+    nivelOleo: false,
+    nivelAgua: false,
+    freios: false,
     pneus: false,
-    luzes: true,
-    bateria: true,
+    luzes: false,
+    bateria: false,
   });
 
-  // Using mock data
-  const os = mockOS;
+  // tRPC queries
+  const { data: osData, isLoading, refetch } = trpc.ordensServico.getCompleta.useQuery(
+    { id: osId },
+    { enabled: !isNaN(osId) }
+  );
+  
+  const { data: crmData } = trpc.crm.getByCliente.useQuery(
+    { clienteId: osData?.cliente?.id || 0 },
+    { enabled: !!osData?.cliente?.id }
+  );
 
-  const formatCurrency = (value: number | null) => {
+  // tRPC mutations
+  const updateOSMutation = trpc.ordensServico.update.useMutation({
+    onSuccess: () => {
+      toast.success("OS atualizada com sucesso!");
+      setIsEditing(false);
+      refetch();
+    },
+    onError: () => toast.error("Erro ao atualizar OS"),
+  });
+
+  const updateStatusMutation = trpc.ordensServico.updateStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Status alterado!");
+      refetch();
+    },
+    onError: () => toast.error("Erro ao alterar status"),
+  });
+
+  const createItemMutation = trpc.osItens.create.useMutation({
+    onSuccess: () => {
+      toast.success("Item adicionado!");
+      setShowAddItemDialog(false);
+      setNewItem({ descricao: "", tipo: "peca", quantidade: 1, valor_custo: 0, margem: 40, valor_unitario: 0, prioridade: "amarelo" });
+      refetch();
+    },
+    onError: () => toast.error("Erro ao adicionar item"),
+  });
+
+  const updateItemStatusMutation = trpc.osItens.updateStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Status do item alterado!");
+      refetch();
+    },
+    onError: () => toast.error("Erro ao alterar status do item"),
+  });
+
+  const deleteItemMutation = trpc.osItens.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Item removido!");
+      refetch();
+    },
+    onError: () => toast.error("Erro ao remover item"),
+  });
+
+  const formatCurrency = (value: number | string | null) => {
     if (value === null || value === undefined) return "R$ 0,00";
+    const num = typeof value === 'string' ? parseFloat(value) : value;
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value);
+    }).format(num);
   };
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: Date | string | null) => {
     if (!date) return "-";
     return new Date(date).toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -201,69 +174,77 @@ export default function AdminOSDetalhes() {
   };
 
   const handleSave = () => {
-    toast.success("OS atualizada com sucesso!");
-    setIsEditing(false);
+    updateOSMutation.mutate({
+      id: osId,
+      ...editedOS,
+    });
   };
 
   const handleStatusChange = (newStatus: string) => {
-    toast.success(`Status alterado para: ${statusConfig[newStatus]?.label || newStatus}`);
+    updateStatusMutation.mutate({ id: osId, status: newStatus });
   };
 
   const handleAddItem = () => {
     const valorTotal = newItem.quantidade * newItem.valor_unitario;
-    const novoItem: OrdemServicoItem = {
-      id: String(Date.now()),
+    createItemMutation.mutate({
+      ordemServicoId: osId,
       descricao: newItem.descricao,
       tipo: newItem.tipo,
       quantidade: newItem.quantidade,
-      valor_unitario: newItem.valor_unitario,
-      valor_total: valorTotal,
-      status: "pendente",
-      motivo_recusa: null,
-      valor_custo: newItem.valor_custo,
-      margem_aplicada: newItem.margem,
+      valorCusto: String(newItem.valor_custo),
+      margemAplicada: String(newItem.margem),
+      valorUnitario: String(newItem.valor_unitario),
+      valorTotal: String(valorTotal),
       prioridade: newItem.prioridade,
-    };
-    setItens([...itens, novoItem]);
-    setShowAddItemDialog(false);
-    setNewItem({
-      descricao: "",
-      tipo: "peca",
-      quantidade: 1,
-      valor_custo: 0,
-      margem: 40,
-      valor_unitario: 0,
-      prioridade: "amarelo",
+      status: "pendente",
     });
-    toast.success("Item adicionado!");
   };
 
-  const handleDeleteItem = (itemId: string) => {
-    setItens(itens.filter(i => i.id !== itemId));
-    toast.success("Item removido!");
+  const handleDeleteItem = (itemId: number) => {
+    deleteItemMutation.mutate({ id: itemId });
   };
 
-  const handleItemStatusChange = (itemId: string, newStatus: string) => {
-    setItens(itens.map(item => 
-      item.id === itemId ? { ...item, status: newStatus } : item
-    ));
-    toast.success(`Status do item alterado para: ${itemStatusConfig[newStatus]?.label || newStatus}`);
+  const handleItemStatusChange = (itemId: number, newStatus: string) => {
+    updateItemStatusMutation.mutate({ id: itemId, status: newStatus });
   };
 
-  const currentStatus = statusConfig[os.status] || statusConfig.orcamento;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-red-500" />
+      </div>
+    );
+  }
+
+  if (!osData?.os) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/ordens-servico")} className="text-white hover:bg-white/10">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <h1 className="text-2xl font-bold text-white">OS não encontrada</h1>
+        </div>
+      </div>
+    );
+  }
+
+  const { os, cliente, veiculo, itens } = osData;
+  const currentStatus = statusConfig[os.status || 'diagnostico'] || statusConfig.diagnostico;
   const StatusIcon = currentStatus.icon;
+  const clientLoyaltyLevel = crmData?.nivelFidelidade || 'bronze';
 
   // Calculate totals from items
-  const totalOrcado = itens.reduce((acc, item) => acc + (item.valor_total || 0), 0);
+  const totalOrcado = itens.reduce((acc, item) => acc + parseFloat(String(item.valorTotal || 0)), 0);
   const totalAprovado = itens
     .filter(item => item.status === "aprovado")
-    .reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    .reduce((acc, item) => acc + parseFloat(String(item.valorTotal || 0)), 0);
   const totalRecusado = itens
     .filter(item => item.status === "recusado")
-    .reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    .reduce((acc, item) => acc + parseFloat(String(item.valorTotal || 0)), 0);
   const totalPendente = itens
     .filter(item => item.status === "pendente")
-    .reduce((acc, item) => acc + (item.valor_total || 0), 0);
+    .reduce((acc, item) => acc + parseFloat(String(item.valorTotal || 0)), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
@@ -276,14 +257,14 @@ export default function AdminOSDetalhes() {
             </Button>
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold font-mono text-white">{os.numero_os}</h1>
+                <h1 className="text-2xl font-bold font-mono text-white">{os.numeroOs}</h1>
                 <Badge variant="outline" className={cn("gap-1", currentStatus.color)}>
                   <StatusIcon className="w-3 h-3" />
                   {currentStatus.label}
                 </Badge>
               </div>
               <p className="text-slate-400 text-sm">
-                Entrada: {formatDate(os.data_entrada)}
+                Entrada: {formatDate(os.dataEntrada)}
               </p>
             </div>
           </div>
@@ -304,7 +285,7 @@ export default function AdminOSDetalhes() {
               variant="outline"
               className="border-slate-700 text-white hover:bg-white/10"
               onClick={() => {
-                const phone = os.client_phone?.replace(/\D/g, '');
+                const phone = cliente?.telefone?.replace(/\D/g, '');
                 if (phone) {
                   window.open(`https://wa.me/55${phone}`, '_blank');
                 }
@@ -318,8 +299,8 @@ export default function AdminOSDetalhes() {
                 <Button variant="outline" onClick={() => setIsEditing(false)} className="border-slate-700 text-white hover:bg-white/10">
                   Cancelar
                 </Button>
-                <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700">
-                  <Save className="w-4 h-4 mr-2" />
+                <Button onClick={handleSave} className="bg-red-600 hover:bg-red-700" disabled={updateOSMutation.isPending}>
+                  {updateOSMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                   Salvar
                 </Button>
               </>
@@ -343,8 +324,7 @@ export default function AdminOSDetalhes() {
                     <User className="w-5 h-5" />
                     Cliente e Veículo
                   </div>
-                  {/* Loyalty Badge */}
-                  {(() => {
+                  {loyaltyBadgeConfig[clientLoyaltyLevel] && (() => {
                     const loyalty = loyaltyBadgeConfig[clientLoyaltyLevel];
                     const LoyaltyIcon = loyalty.icon;
                     return (
@@ -360,51 +340,27 @@ export default function AdminOSDetalhes() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <Label className="text-slate-400 text-xs">Cliente</Label>
-                    {isEditing ? (
-                      <Input 
-                        value={editedOS.client_name ?? os.client_name ?? ""} 
-                        onChange={(e) => setEditedOS({...editedOS, client_name: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
-                      />
-                    ) : (
-                      <p className="font-medium text-white">{os.client_name || "-"}</p>
-                    )}
+                    <p className="font-medium text-white">{cliente?.nomeCompleto || "-"}</p>
                   </div>
                   <div>
                     <Label className="text-slate-400 text-xs">Telefone</Label>
-                    {isEditing ? (
-                      <Input 
-                        value={editedOS.client_phone ?? os.client_phone ?? ""} 
-                        onChange={(e) => setEditedOS({...editedOS, client_phone: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-white">{os.client_phone || "-"}</p>
-                        {os.client_phone && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 text-green-500 hover:bg-green-500/10"
-                            onClick={() => window.open(`https://wa.me/55${os.client_phone?.replace(/\D/g, '')}`, '_blank')}
-                          >
-                            <Phone className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-white">{cliente?.telefone || "-"}</p>
+                      {cliente?.telefone && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-green-500 hover:bg-green-500/10"
+                          onClick={() => window.open(`https://wa.me/55${cliente.telefone?.replace(/\D/g, '')}`, '_blank')}
+                        >
+                          <Phone className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <Label className="text-slate-400 text-xs">KM Atual</Label>
-                    {isEditing ? (
-                      <Input 
-                        value={editedOS.km_atual ?? os.km_atual ?? ""} 
-                        onChange={(e) => setEditedOS({...editedOS, km_atual: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
-                      />
-                    ) : (
-                      <p className="font-medium text-white">{os.km_atual ? `${os.km_atual} km` : "-"}</p>
-                    )}
+                    <p className="font-medium text-white">{os.km ? `${os.km.toLocaleString('pt-BR')} km` : "-"}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-700">
@@ -413,8 +369,8 @@ export default function AdminOSDetalhes() {
                       <Car className="w-5 h-5 text-blue-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-white">{os.vehicle}</p>
-                      <p className="text-sm text-slate-400 font-mono">{os.plate}</p>
+                      <p className="font-medium text-white">{veiculo ? `${veiculo.marca} ${veiculo.modelo}` : os.placa}</p>
+                      <p className="text-sm text-slate-400 font-mono">{veiculo?.placa || os.placa}</p>
                     </div>
                   </div>
                 </div>
@@ -434,12 +390,12 @@ export default function AdminOSDetalhes() {
                   <Label className="text-slate-400 text-xs">Problema Relatado</Label>
                   {isEditing ? (
                     <Textarea 
-                      value={editedOS.descricao_problema ?? os.descricao_problema ?? ""} 
-                      onChange={(e) => setEditedOS({...editedOS, descricao_problema: e.target.value})}
+                      value={editedOS.descricaoProblema ?? os.descricaoProblema ?? ""} 
+                      onChange={(e) => setEditedOS({...editedOS, descricaoProblema: e.target.value})}
                       className="bg-slate-800 border-slate-700 text-white min-h-[80px]"
                     />
                   ) : (
-                    <p className="text-white mt-1">{os.descricao_problema || "Não informado"}</p>
+                    <p className="text-white mt-1">{os.descricaoProblema || os.motivoVisita || "Não informado"}</p>
                   )}
                 </div>
                 <div>
@@ -559,7 +515,7 @@ export default function AdminOSDetalhes() {
                     ) : (
                       itens.map((item) => {
                         const prioridade = prioridadeConfig[item.prioridade || 'verde'];
-                        const itemStatus = itemStatusConfig[item.status] || itemStatusConfig.pendente;
+                        const itemStatus = itemStatusConfig[item.status || 'pendente'] || itemStatusConfig.pendente;
                         return (
                           <div 
                             key={item.id} 
@@ -587,18 +543,18 @@ export default function AdminOSDetalhes() {
                                   </Badge>
                                 </div>
                                 <p className="font-medium text-white">{item.descricao}</p>
-                                {item.motivo_recusa && (
-                                  <p className="text-sm text-red-400 mt-1">Motivo: {item.motivo_recusa}</p>
+                                {item.motivoRecusa && (
+                                  <p className="text-sm text-red-400 mt-1">Motivo: {item.motivoRecusa}</p>
                                 )}
                                 <div className="flex items-center gap-4 mt-2 text-sm text-slate-400">
-                                  <span>{item.quantidade}x {formatCurrency(item.valor_unitario)}</span>
-                                  {item.valor_custo && (
-                                    <span className="text-xs">Custo: {formatCurrency(item.valor_custo)} | Margem: {item.margem_aplicada}%</span>
+                                  <span>{item.quantidade}x {formatCurrency(item.valorUnitario)}</span>
+                                  {item.valorCusto && (
+                                    <span className="text-xs">Custo: {formatCurrency(item.valorCusto)} | Margem: {item.margemAplicada}%</span>
                                   )}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="text-lg font-bold text-white">{formatCurrency(item.valor_total)}</p>
+                                <p className="text-lg font-bold text-white">{formatCurrency(item.valorTotal)}</p>
                                 <div className="flex gap-1 mt-2">
                                   {item.status === 'pendente' && (
                                     <>
@@ -649,7 +605,7 @@ export default function AdminOSDetalhes() {
                 <CardTitle className="text-lg text-white">Alterar Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <Select value={os.status} onValueChange={handleStatusChange}>
+                <Select value={os.status || 'diagnostico'} onValueChange={handleStatusChange}>
                   <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -714,23 +670,23 @@ export default function AdminOSDetalhes() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 text-sm">Entrada</span>
-                  <span className="text-white text-sm">{formatDate(os.data_entrada)}</span>
+                  <span className="text-white text-sm">{formatDate(os.dataEntrada)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 text-sm">Orçamento</span>
-                  <span className="text-white text-sm">{formatDate(os.data_orcamento)}</span>
+                  <span className="text-white text-sm">{formatDate(os.dataOrcamento)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 text-sm">Aprovação</span>
-                  <span className="text-white text-sm">{formatDate(os.data_aprovacao)}</span>
+                  <span className="text-white text-sm">{formatDate(os.dataAprovacao)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 text-sm">Conclusão</span>
-                  <span className="text-white text-sm">{formatDate(os.data_conclusao)}</span>
+                  <span className="text-white text-sm">{formatDate(os.dataConclusao)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-400 text-sm">Entrega</span>
-                  <span className="text-white text-sm">{formatDate(os.data_entrega)}</span>
+                  <span className="text-white text-sm">{formatDate(os.dataSaida)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -744,8 +700,9 @@ export default function AdminOSDetalhes() {
                 <Button 
                   className="w-full justify-start bg-green-600 hover:bg-green-700"
                   onClick={() => {
-                    const phone = os.client_phone?.replace(/\D/g, '');
-                    const message = encodeURIComponent(`Olá ${os.client_name}! Seu orçamento para o veículo ${os.vehicle} (${os.plate}) está pronto. Acesse: ${window.location.origin}/cliente/orcamento/${osId}`);
+                    const phone = cliente?.telefone?.replace(/\D/g, '');
+                    const veiName = veiculo ? `${veiculo.marca} ${veiculo.modelo}` : os.placa;
+                    const message = encodeURIComponent(`Olá ${cliente?.nomeCompleto}! Seu orçamento para o veículo ${veiName} (${veiculo?.placa || os.placa}) está pronto. Acesse: ${window.location.origin}/cliente/orcamento/${osId}`);
                     window.open(`https://wa.me/55${phone}?text=${message}`, '_blank');
                   }}
                 >
@@ -865,8 +822,8 @@ export default function AdminOSDetalhes() {
             <Button variant="outline" onClick={() => setShowAddItemDialog(false)} className="border-slate-700 text-white hover:bg-white/10">
               Cancelar
             </Button>
-            <Button onClick={handleAddItem} className="bg-red-600 hover:bg-red-700" disabled={!newItem.descricao}>
-              Adicionar
+            <Button onClick={handleAddItem} className="bg-red-600 hover:bg-red-700" disabled={!newItem.descricao || createItemMutation.isPending}>
+              {createItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Adicionar"}
             </Button>
           </DialogFooter>
         </DialogContent>

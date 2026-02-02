@@ -297,3 +297,105 @@ export async function updateOrdemServicoStatus(id: number, status: string) {
   
   return true;
 }
+
+// Ordens de Serviço - Funções completas
+export async function getOrdemServicoCompleta(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Buscar OS
+  const osResult = await db.select().from(ordensServico).where(eq(ordensServico.id, id)).limit(1);
+  if (osResult.length === 0) return null;
+  const os = osResult[0];
+
+  // Buscar cliente
+  let cliente = null;
+  if (os.clienteId) {
+    const clienteResult = await db.select().from(clientes).where(eq(clientes.id, os.clienteId)).limit(1);
+    cliente = clienteResult.length > 0 ? clienteResult[0] : null;
+  }
+
+  // Buscar veículo
+  let veiculo = null;
+  if (os.veiculoId) {
+    const veiculoResult = await db.select().from(veiculos).where(eq(veiculos.id, os.veiculoId)).limit(1);
+    veiculo = veiculoResult.length > 0 ? veiculoResult[0] : null;
+  }
+
+  // Buscar itens
+  const itens = await db.select().from(ordensServicoItens).where(eq(ordensServicoItens.ordemServicoId, id));
+
+  // Buscar mecânico
+  let mecanico = null;
+  if (os.mecanicoId) {
+    const mecanicoResult = await db.select().from(mecanicos).where(eq(mecanicos.id, os.mecanicoId)).limit(1);
+    mecanico = mecanicoResult.length > 0 ? mecanicoResult[0] : null;
+  }
+
+  return {
+    os,
+    cliente,
+    veiculo,
+    itens,
+    mecanico,
+  };
+}
+
+export async function updateOrdemServico(id: number, data: Partial<InsertOrdemServico>) {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(ordensServico)
+    .set(data)
+    .where(eq(ordensServico.id, id));
+  
+  return true;
+}
+
+// Itens da OS
+import { ordensServicoItens, InsertOrdemServicoItem } from "../drizzle/schema";
+
+export async function getItensOrdemServico(ordemServicoId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(ordensServicoItens).where(eq(ordensServicoItens.ordemServicoId, ordemServicoId));
+}
+
+export async function createItemOrdemServico(item: InsertOrdemServicoItem) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(ordensServicoItens).values(item);
+  return { id: result[0].insertId };
+}
+
+export async function updateItemOrdemServico(id: number, data: Partial<InsertOrdemServicoItem>) {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(ordensServicoItens)
+    .set(data)
+    .where(eq(ordensServicoItens.id, id));
+  
+  return true;
+}
+
+export async function deleteItemOrdemServico(id: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.delete(ordensServicoItens).where(eq(ordensServicoItens.id, id));
+  return true;
+}
+
+// CRM - Fidelidade
+import { crm } from "../drizzle/schema";
+
+export async function getCrmByClienteId(clienteId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(crm).where(eq(crm.clienteId, clienteId)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
