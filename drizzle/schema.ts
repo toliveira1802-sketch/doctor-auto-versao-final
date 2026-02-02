@@ -199,6 +199,8 @@ export const ordensServico = mysqlTable("09_ordens_servico", {
   observacoes: text("observacoes"),
   motivoRecusa: text("motivoRecusa"),
   googleDriveLink: varchar("googleDriveLink", { length: 500 }),
+  emTerceiros: boolean("emTerceiros").default(false),
+  recurso: varchar("recurso", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

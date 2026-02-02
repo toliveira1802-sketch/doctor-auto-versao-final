@@ -281,3 +281,10 @@
 - [x] Importar dados de 07_clientes.xlsx (1 cliente: NELSON VOLPATO)
 - [ ] Importar dados de 08_veiculos.xlsx (arquivo contém veículos)
 - [x] Gerar relatório de regras de cadastro (RELATORIO_REGRAS_CADASTRO.md)
+
+## Adaptar Visão Pátio (Kanban + Mapa)
+- [ ] Ler LayoutPatio.tsx enviado
+- [ ] Ler KanbanCard.tsx enviado
+- [ ] Ler KanbanCardDetails.tsx enviado
+- [ ] Adaptar componentes para o projeto atual
+- [ ] Testar funcionamento

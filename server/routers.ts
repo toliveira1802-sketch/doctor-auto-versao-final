@@ -264,6 +264,8 @@ export const appRouter = router({
         googleDriveLink: z.string().optional(),
         mecanicoId: z.number().optional(),
         recursoId: z.number().optional(),
+        emTerceiros: z.boolean().optional(),
+        recurso: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
