@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, ThumbsUp, ThumbsDown, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { mecanicosMock } from "@/lib/mockData";
@@ -10,12 +11,14 @@ interface Feedback {
   id: number;
   mecanicoId: number;
   tipo: 'positivo' | 'negativo';
+  comentario: string;
   data: Date;
 }
 
 export default function AdminMechanicFeedback() {
   const [selectedMechanic, setSelectedMechanic] = useState<number | null>(null);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [comentario, setComentario] = useState("");
   const mechanics = mecanicosMock.filter(m => m.empresaId === 1);
 
   const today = new Date();
@@ -39,10 +42,12 @@ export default function AdminMechanicFeedback() {
       id: Date.now(),
       mecanicoId: selectedMechanic,
       tipo,
+      comentario,
       data: new Date(),
     };
 
     setFeedbacks([...feedbacks, newFeedback]);
+    setComentario("");
     toast.success(`Feedback ${tipo} registrado!`);
   };
 
@@ -106,6 +111,13 @@ export default function AdminMechanicFeedback() {
                   <p className="text-center font-medium">
                     Avaliando: {getMechanicName(selectedMechanic)}
                   </p>
+                  <Textarea
+                    placeholder="Escreva o motivo do feedback..."
+                    value={comentario}
+                    onChange={(e) => setComentario(e.target.value)}
+                    className="mb-4"
+                    rows={3}
+                  />
                   <div className="flex justify-center gap-4">
                     <Button
                       size="lg"
@@ -155,12 +167,17 @@ export default function AdminMechanicFeedback() {
               <div className="mt-4 space-y-2">
                 <p className="text-sm text-muted-foreground">Feedbacks de hoje:</p>
                 {todayFeedbacks.map(f => (
-                  <div key={f.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                    <span>{getMechanicName(f.mecanicoId)}</span>
-                    {f.tipo === 'positivo' ? (
-                      <ThumbsUp className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <ThumbsDown className="w-4 h-4 text-red-500" />
+                  <div key={f.id} className="p-3 bg-muted/50 rounded space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{getMechanicName(f.mecanicoId)}</span>
+                      {f.tipo === 'positivo' ? (
+                        <ThumbsUp className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <ThumbsDown className="w-4 h-4 text-red-500" />
+                      )}
+                    </div>
+                    {f.comentario && (
+                      <p className="text-sm text-muted-foreground">{f.comentario}</p>
                     )}
                   </div>
                 ))}
