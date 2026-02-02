@@ -132,3 +132,32 @@
 - [x] Página Pendências: Ordem FIFO (mais antigas primeiro)
 - [x] Página Pendências: Filtro por Todos, Thales, Pedro, João
 - [x] Página Pendências: Permissões (consultores só para si, gestão/direção para todos)
+
+## Ajustes Operacional e Overview
+- [ ] Remover "Agenda dos Mecânicos" do Operacional
+- [ ] Manter cabeçalho (Operacional, Financeiro, Produtividade, Agenda) nas outras páginas
+- [ ] Verificar cálculo de Performance dos Mecânicos no Overview
+
+## Atualização Página Financeiro
+- [ ] Criar layout igual à referência com 6 cards
+- [ ] Card FATURADO (azul) - Total entregue
+- [ ] Card TICKET MÉDIO (roxo) - Por veículo
+- [ ] Card SAÍDA HOJE (rosa) - Previsão de entrega
+- [ ] Card ATRASADO (amarelo) - Previsão vencida
+- [ ] Card PRESO (laranja) - No pátio
+- [ ] Card ENTREGUES (verde) - Veículos finalizados
+- [ ] Header com filtro de período e botões
+- [ ] Menu superior: Operacional, Financeiro, Produtividade, Agenda, Histórico
+- [ ] Conectar com tabela de dados (aguardando usuário)
+
+## Página OS Ultimate
+- [ ] Criar página /admin/os/:id (OS Ultimate)
+- [ ] Header com status, número OS, veículo, placa
+- [ ] Cards: Cliente, Valor Total, Previsão Entrega
+- [ ] Tabs: Resumo, Serviços, Fotos, Histórico
+- [ ] Problema Relatado e Diagnóstico Técnico
+- [ ] Lista de serviços com status (concluído, em andamento, pendente)
+- [ ] Resumo financeiro (peças, mão de obra, desconto, total)
+- [ ] Botões: Contatar Cliente, Atualizar Status
+- [ ] Conectar Nova OS para redirecionar após criar
+- [ ] Status inicial = Diagnóstico automático

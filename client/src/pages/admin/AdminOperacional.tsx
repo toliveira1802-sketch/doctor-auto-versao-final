@@ -1,332 +1,376 @@
-import { useState } from "react";
-import { Link } from "wouter";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Wrench,
-  DollarSign,
-  TrendingUp,
-  Calendar,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  MapPin,
-  RefreshCw,
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  RefreshCw, Search, Clock, FileText, Package, CheckCircle, Wrench, Car, 
+  AlertTriangle, Eye, ArrowLeft
 } from "lucide-react";
-import {
-  ordensServicoMock,
-  colaboradoresMock,
-  agendamentosMock,
-  mecanicosMock,
-} from "@/lib/mockData";
+import { toast } from "sonner";
+import { Link } from "wouter";
+import { ordensServicoMock, mecanicosMock, statusList } from "@/lib/mockData";
+
+interface WorkflowEtapa {
+  id: string;
+  nome: string;
+  ordem: number;
+  cor: string;
+  icone: string;
+}
+
+interface VehicleInWorkflow {
+  id: string;
+  plate: string;
+  model: string;
+  status: string;
+  mechanic_name: string | null;
+  client_name: string | null;
+  days_in_stage: number;
+  final_price: number;
+}
+
+const etapaIcons: Record<string, React.ElementType> = {
+  'search': Search,
+  'file-text': FileText,
+  'clock': Clock,
+  'package': Package,
+  'check-circle': CheckCircle,
+  'wrench': Wrench,
+  'car': Car,
+};
 
 export default function AdminOperacional() {
-  const [consultorFiltro, setConsultorFiltro] = useState("todos");
+  const [etapas, setEtapas] = useState<WorkflowEtapa[]>([]);
+  const [vehiclesByEtapa, setVehiclesByEtapa] = useState<Record<string, VehicleInWorkflow[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedEtapa, setSelectedEtapa] = useState<WorkflowEtapa | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterMechanic, setFilterMechanic] = useState<string>("all");
+  const [capacidade, setCapacidade] = useState({ atual: 0, maxima: 20 });
+  const [showDelayedModal, setShowDelayedModal] = useState(false);
 
-  // Dados mock para o operacional
-  const capacidadeTotal = 20;
-  const veiculosNoPatio = ordensServicoMock.filter(os => os.status !== "Entregue").length;
-  const capacidadePercent = Math.round((veiculosNoPatio / capacidadeTotal) * 100);
-  
-  const emExecucao = ordensServicoMock.filter(os => os.status === "Em Execução").length;
-  const retornoNaOficina = 1; // mock
-  const foraLoja = 1; // mock
+  const fetchData = () => {
+    // Usar dados mock
+    const etapasData: WorkflowEtapa[] = statusList.filter(s => s.status !== "Entregue").map(s => ({
+      id: s.id.toString(),
+      nome: s.status,
+      ordem: s.ordem,
+      cor: s.cor,
+      icone: s.ordem === 1 ? 'search' : s.ordem === 2 ? 'file-text' : s.ordem <= 4 ? 'clock' : s.ordem <= 6 ? 'wrench' : 'car'
+    }));
+    
+    setEtapas(etapasData);
 
-  // Status do pátio
-  const statusPatio = [
-    { titulo: "Diagnóstico", valor: ordensServicoMock.filter(os => os.status === "Diagnóstico").length, subtitulo: "em análise", cor: "border-red-500" },
-    { titulo: "Orçamentos Pendentes", valor: ordensServicoMock.filter(os => os.status === "Orçamento").length, subtitulo: "aguardando consultor", cor: "border-yellow-500" },
-    { titulo: "Aguard. Aprovação", valor: ordensServicoMock.filter(os => os.status === "Aguardando Aprovação").length, subtitulo: "pendente", cor: "border-yellow-500" },
-    { titulo: "Aguard. Peças", valor: ordensServicoMock.filter(os => os.status === "Aguardando Peça").length, subtitulo: "esperando", cor: "border-orange-500" },
-    { titulo: "Pronto pra Iniciar", valor: ordensServicoMock.filter(os => os.status === "Pronto para Iniciar").length, subtitulo: "aguardando", cor: "border-green-500" },
-    { titulo: "Em Execução", valor: emExecucao, subtitulo: "trabalhando", cor: "border-cyan-500" },
-    { titulo: "Prontos", valor: ordensServicoMock.filter(os => os.status === "Pronto" || os.status === "Aguardando Retirada").length, subtitulo: "aguardando retirada", cor: "border-purple-500" },
-    { titulo: "Agendados Hoje", valor: agendamentosMock.filter(a => a.dataAgendamento === "2026-02-03").length, subtitulo: "para entrar", cor: "border-blue-500", destaque: true },
-  ];
+    // Agrupar OS por status
+    const grouped: Record<string, VehicleInWorkflow[]> = {};
+    etapasData.forEach(e => { grouped[e.id] = []; });
 
-  // Veículos atrasados (mock)
-  const veiculosAtrasados = 4;
+    ordensServicoMock.forEach(os => {
+      const etapa = etapasData.find(e => e.nome === os.status);
+      if (etapa) {
+        const daysInStage = Math.floor((new Date().getTime() - new Date(os.dataEntrada).getTime()) / (1000 * 60 * 60 * 24));
+        grouped[etapa.id].push({
+          id: os.id.toString(),
+          plate: os.placa,
+          model: os.veiculo,
+          status: os.status,
+          mechanic_name: os.mecanico,
+          client_name: os.cliente,
+          days_in_stage: daysInStage,
+          final_price: os.valorTotalOs,
+        });
+      }
+    });
 
-  // Tempo médio de permanência por etapa (mock)
-  const tempoMedioPorEtapa = [
-    { etapa: "Diagnóstico", dias: 0.0, veiculos: 0, alerta: false },
-    { etapa: "Orçamentos", dias: 0.0, veiculos: 0, alerta: false },
-    { etapa: "Aguard. Aprovação", dias: 0.0, veiculos: 0, alerta: false },
-    { etapa: "Aguard. Peças", dias: 17.0, veiculos: 1, alerta: true },
-    { etapa: "Pronto pra Iniciar", dias: 0.0, veiculos: 0, alerta: false },
-    { etapa: "Em Execução", dias: 2.0, veiculos: 4, alerta: false },
-    { etapa: "Prontos", dias: 1.0, veiculos: 1, alerta: false },
-  ];
+    setVehiclesByEtapa(grouped);
+    setCapacidade({ atual: ordensServicoMock.length, maxima: 20 });
+    setLoading(false);
+    setRefreshing(false);
+  };
 
-  // Agenda dos mecânicos do dia (mock)
-  const agendaMecanicosDia = mecanicosMock.slice(0, 6).map(mec => {
-    const osDoMecanico = ordensServicoMock.filter(os => os.mecanicoId === mec.id && os.status !== "Entregue");
-    return {
-      ...mec,
-      osAtribuidas: osDoMecanico.length,
-      status: osDoMecanico.length > 0 ? "ocupado" : "livre",
-      osAtual: osDoMecanico[0] || null,
-    };
-  });
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const consultores = colaboradoresMock.filter(c => c.cargo === "Consultor Técnico");
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+    toast.success("Dados atualizados!");
+  };
+
+  const getCapacidadeStatus = () => {
+    const percentage = (capacidade.atual / capacidade.maxima) * 100;
+    if (percentage <= 75) return { color: 'bg-green-500', label: 'CAPACIDADE OK', textColor: 'text-green-500' };
+    if (percentage <= 100) return { color: 'bg-yellow-500', label: 'ATENÇÃO', textColor: 'text-yellow-500' };
+    return { color: 'bg-red-500', label: 'OFICINA CHEIA', textColor: 'text-red-500' };
+  };
+
+  const capacidadeStatus = getCapacidadeStatus();
+
+  const getDelayedVehicles = () => {
+    const delayed: VehicleInWorkflow[] = [];
+    Object.values(vehiclesByEtapa).forEach(vehicles => {
+      vehicles.forEach(v => {
+        if (v.days_in_stage > 5) delayed.push(v);
+      });
+    });
+    return delayed.sort((a, b) => b.days_in_stage - a.days_in_stage);
+  };
+
+  const getDaysBadgeColor = (days: number) => {
+    if (days <= 2) return 'bg-green-500/20 text-green-500';
+    if (days <= 5) return 'bg-yellow-500/20 text-yellow-500';
+    return 'bg-red-500/20 text-red-500';
+  };
+
+  const filteredVehicles = (vehicles: VehicleInWorkflow[]) => {
+    return vehicles.filter(v => {
+      const matchesSearch = searchTerm === "" || 
+        v.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        v.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesMechanic = filterMechanic === "all" || v.mechanic_name === filterMechanic;
+      
+      return matchesSearch && matchesMechanic;
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#0f1419]">
-      {/* Header com abas */}
-      <header className="bg-[#1a1f26] border-b border-gray-800">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center">
-              <Wrench className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-white font-bold">Doctor Auto</span>
-          </div>
-          <nav className="flex items-center gap-6">
-            <Link href="/admin/operacional">
-              <span className="flex items-center gap-2 text-blue-400 border-b-2 border-blue-400 pb-1 cursor-pointer">
-                <Wrench className="h-4 w-4" />
-                Operacional
-              </span>
+    <div className="min-h-screen bg-[#0d1117]">
+      <div className="p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link href="/admin">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
             </Link>
-            <Link href="/admin/financeiro">
-              <span className="flex items-center gap-2 text-gray-400 hover:text-white cursor-pointer">
-                <DollarSign className="h-4 w-4" />
-                Financeiro
-              </span>
-            </Link>
-            <Link href="/admin/produtividade">
-              <span className="flex items-center gap-2 text-gray-400 hover:text-white cursor-pointer">
-                <TrendingUp className="h-4 w-4" />
-                Produtividade
-              </span>
-            </Link>
-            <Link href="/admin/agendamentos">
-              <span className="flex items-center gap-2 text-gray-400 hover:text-white cursor-pointer">
-                <Calendar className="h-4 w-4" />
-                Agenda
-              </span>
-            </Link>
-            <Link href="/admin/overview">
-              <span className="flex items-center gap-2 text-gray-400 hover:text-white cursor-pointer">
-                <Clock className="h-4 w-4" />
-                Histórico
-              </span>
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="p-6">
-        {/* Título e Cards de Status */}
-        <div className="mb-6">
-          <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Oficina Doctor Auto</h1>
-              <p className="text-gray-400">Gestão de Pátio em Tempo Real</p>
-            </div>
-            <div className="flex gap-3">
-              {/* Capacidade */}
-              <Card className={`bg-green-500/10 border-2 ${capacidadePercent > 80 ? "border-red-500" : "border-green-500"}`}>
-                <CardContent className="p-4 flex items-center gap-3">
-                  <CheckCircle className={`h-8 w-8 ${capacidadePercent > 80 ? "text-red-400" : "text-green-400"}`} />
-                  <div>
-                    <p className={`font-bold ${capacidadePercent > 80 ? "text-red-400" : "text-green-400"}`}>
-                      CAPACIDADE {capacidadePercent > 80 ? "ALTA" : "OK"}
-                    </p>
-                    <p className="text-gray-400 text-sm">Capacidade: {veiculosNoPatio}/{capacidadeTotal} ({capacidadePercent}%)</p>
-                    <p className="text-gray-500 text-xs">Clique para ver placas</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Fluxo */}
-              <Card className="bg-green-500/10 border-2 border-green-500">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <div>
-                    <p className="text-green-400 font-bold">FLUXO OK</p>
-                    <p className="text-gray-400 text-sm">🔧 Em Execução: {emExecucao}</p>
-                    <p className="text-gray-500 text-xs">Clique para ver placas</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Retorno */}
-              <Card className="bg-red-500/10 border-2 border-red-500">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {retornoNaOficina}
-                  </div>
-                  <div>
-                    <p className="text-red-400 font-bold">RETORNO</p>
-                    <p className="text-gray-400 text-sm">Na oficina</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Fora da Loja */}
-              <Card className="bg-blue-500/10 border-2 border-blue-500">
-                <CardContent className="p-4 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {foraLoja}
-                  </div>
-                  <div>
-                    <p className="text-blue-400 font-bold flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      FORA DA LOJA
-                    </p>
-                    <p className="text-gray-400 text-sm">Externos</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-
-        {/* Status Pátio */}
-        <Card className="bg-[#1a1f26] border-gray-800 mb-6">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white font-bold">Status Pátio</h2>
-              <Select value={consultorFiltro} onValueChange={setConsultorFiltro}>
-                <SelectTrigger className="w-48 bg-[#252b33] border-gray-700 text-white">
-                  <SelectValue placeholder="Todos Consultores" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#252b33] border-gray-700">
-                  <SelectItem value="todos" className="text-white">Todos Consultores</SelectItem>
-                  {consultores.map(c => (
-                    <SelectItem key={c.id} value={String(c.id)} className="text-white">{c.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-4 gap-4">
-              {statusPatio.map((status, idx) => (
-                <Card 
-                  key={idx} 
-                  className={`border-l-4 ${status.cor} ${status.destaque ? "bg-blue-500/10" : "bg-[#252b33]"} border-t-0 border-r-0 border-b-0`}
-                >
-                  <CardContent className="p-4">
-                    <p className={`text-sm ${status.destaque ? "text-blue-400" : "text-red-400"}`}>{status.titulo}</p>
-                    <p className="text-4xl font-bold text-white my-2">{status.valor}</p>
-                    <p className="text-gray-500 text-sm">{status.subtitulo}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Veículos Atrasados */}
-        <Card className="bg-yellow-500/10 border-2 border-yellow-500 mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-6 w-6 text-yellow-400" />
-                <div>
-                  <p className="text-yellow-400 font-bold">⚠️ VEÍCULOS ATRASADOS</p>
-                  <p className="text-gray-400 text-sm">Previsão de entrega ultrapassada</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-4xl font-bold text-yellow-400">{veiculosAtrasados}</p>
-                <p className="text-gray-400 text-sm">críticos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tempo Médio de Permanência por Etapa */}
-        <Card className="bg-[#1a1f26] border-gray-800 mb-6">
-          <CardContent className="p-6">
-            <div className="mb-4">
-              <h2 className="text-white font-bold">Tempo Médio de Permanência por Etapa</h2>
-              <p className="text-gray-400 text-sm">Análise de gargalos operacionais</p>
-            </div>
-
-            <div className="grid grid-cols-7 gap-3">
-              {tempoMedioPorEtapa.map((etapa, idx) => (
-                <Card 
-                  key={idx} 
-                  className={`${etapa.alerta ? "bg-red-500/10 border-red-500" : "bg-[#252b33] border-gray-700"}`}
-                >
-                  <CardContent className="p-4 text-center">
-                    <p className="text-gray-400 text-xs mb-2">{etapa.etapa}</p>
-                    <p className={`text-2xl font-bold ${etapa.alerta ? "text-red-400" : "text-white"}`}>
-                      {etapa.dias.toFixed(1)}
-                    </p>
-                    <p className="text-gray-500 text-xs">dias médio</p>
-                    <p className="text-gray-600 text-xs">({etapa.veiculos} veículos)</p>
-                    {etapa.alerta && <AlertTriangle className="h-4 w-4 text-red-400 mx-auto mt-2" />}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <div className="mt-4 p-3 bg-red-500/10 rounded-lg border border-red-500/30">
-              <p className="text-red-400 text-sm">
-                🚨 <strong>Gargalos identificados:</strong> Etapas marcadas com ⚠️ estão acima do tempo médio geral e requerem atenção.
+              <h1 className="text-2xl font-bold text-white">Dashboard Operacional</h1>
+              <p className="text-gray-400">
+                Visão em tempo real do fluxo da oficina
               </p>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowDelayedModal(true)}
+              className="gap-2"
+            >
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              Ver Atrasados ({getDelayedVehicles().length})
+            </Button>
+            <Button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+          </div>
+        </div>
+
+        {/* Capacity Alert */}
+        <Card className={`${capacidadeStatus.color}/10 border-${capacidadeStatus.color.replace('bg-', '')}/30`}>
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`w-3 h-3 rounded-full ${capacidadeStatus.color} animate-pulse`} />
+                <span className={`font-semibold ${capacidadeStatus.textColor}`}>
+                  {capacidadeStatus.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Car className="w-5 h-5 text-gray-400" />
+                <span className="text-lg font-bold text-white">
+                  {capacidade.atual} / {capacidade.maxima}
+                </span>
+                <span className="text-gray-400">veículos</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Agenda dos Mecânicos do Dia */}
-        <Card className="bg-[#1a1f26] border-gray-800">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-white font-bold">Agenda dos Mecânicos - Hoje</h2>
-                <p className="text-gray-400 text-sm">Distribuição de trabalho do dia</p>
-              </div>
-              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Atualizar
-              </Button>
-            </div>
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Buscar por placa, modelo ou cliente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-[#1a1f26] border-gray-700"
+            />
+          </div>
+          <Select value={filterMechanic} onValueChange={setFilterMechanic}>
+            <SelectTrigger className="w-[200px] bg-[#1a1f26] border-gray-700">
+              <SelectValue placeholder="Filtrar mecânico" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos mecânicos</SelectItem>
+              {mecanicosMock.filter(m => m.empresaId === 1).map(m => (
+                <SelectItem key={m.id} value={m.nome}>{m.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              {agendaMecanicosDia.map((mec) => (
-                <Card 
-                  key={mec.id} 
-                  className={`${mec.status === "ocupado" ? "bg-cyan-500/10 border-cyan-500" : "bg-green-500/10 border-green-500"} border`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-white font-bold">{mec.nome}</p>
-                      <span className={`px-2 py-1 rounded text-xs ${mec.status === "ocupado" ? "bg-cyan-500/20 text-cyan-400" : "bg-green-500/20 text-green-400"}`}>
-                        {mec.status === "ocupado" ? "Ocupado" : "Livre"}
-                      </span>
+        {/* Workflow Kanban */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+          {etapas.map(etapa => {
+            const vehicles = filteredVehicles(vehiclesByEtapa[etapa.id] || []);
+            const IconComponent = etapaIcons[etapa.icone] || Car;
+            
+            return (
+              <Card 
+                key={etapa.id} 
+                className="bg-[#1a1f26] border-gray-800 cursor-pointer hover:border-gray-600 transition-all"
+                onClick={() => setSelectedEtapa(etapa)}
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <div 
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: `${etapa.cor}20` }}
+                    >
+                      <IconComponent className="w-4 h-4" style={{ color: etapa.cor }} />
                     </div>
-                    <p className="text-gray-400 text-sm">{mec.especialidade}</p>
-                    <p className="text-gray-500 text-xs">{mec.grauConhecimento}</p>
-                    {mec.osAtual && (
-                      <div className="mt-3 p-2 bg-white/5 rounded">
-                        <p className="text-white text-sm font-medium">{mec.osAtual.placa}</p>
-                        <p className="text-gray-400 text-xs">{mec.osAtual.veiculo}</p>
-                        <p className="text-cyan-400 text-xs">{mec.osAtual.status}</p>
+                    <span className="text-white truncate">{etapa.nome}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-white mb-2">{vehicles.length}</div>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {vehicles.slice(0, 3).map(v => (
+                      <div key={v.id} className="p-2 bg-[#252b33] rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-white">{v.plate}</span>
+                          <Badge className={getDaysBadgeColor(v.days_in_stage)}>
+                            {v.days_in_stage}d
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-400 truncate">{v.model}</p>
                       </div>
+                    ))}
+                    {vehicles.length > 3 && (
+                      <p className="text-xs text-gray-500 text-center">+{vehicles.length - 3} mais</p>
                     )}
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-gray-500 text-xs">OS atribuídas:</span>
-                      <span className="text-white font-bold">{mec.osAtribuidas}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Etapa Detail Modal */}
+        <Dialog open={!!selectedEtapa} onOpenChange={() => setSelectedEtapa(null)}>
+          <DialogContent className="max-w-2xl bg-[#1a1f26] border-gray-800">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                {selectedEtapa && (
+                  <>
+                    <div 
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: `${selectedEtapa.cor}20` }}
+                    >
+                      {(() => {
+                        const IconComponent = etapaIcons[selectedEtapa.icone] || Car;
+                        return <IconComponent className="w-4 h-4" style={{ color: selectedEtapa.cor }} />;
+                      })()}
                     </div>
-                  </CardContent>
-                </Card>
+                    {selectedEtapa.nome}
+                  </>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {selectedEtapa && filteredVehicles(vehiclesByEtapa[selectedEtapa.id] || []).map(v => (
+                <div key={v.id} className="p-4 bg-[#252b33] rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <span className="text-lg font-bold text-white">{v.plate}</span>
+                      <span className="text-gray-400 ml-2">{v.model}</span>
+                    </div>
+                    <Badge className={getDaysBadgeColor(v.days_in_stage)}>
+                      {v.days_in_stage} dias
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Cliente:</span>
+                      <span className="text-white ml-2">{v.client_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Mecânico:</span>
+                      <span className="text-white ml-2">{v.mechanic_name || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Valor:</span>
+                      <span className="text-green-400 ml-2">R$ {v.final_price.toLocaleString('pt-BR')}</span>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      </main>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delayed Vehicles Modal */}
+        <Dialog open={showDelayedModal} onOpenChange={setShowDelayedModal}>
+          <DialogContent className="max-w-2xl bg-[#1a1f26] border-gray-800">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                Veículos Atrasados (+5 dias)
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {getDelayedVehicles().map(v => (
+                <div key={v.id} className="p-4 bg-[#252b33] rounded-lg border-l-4 border-red-500">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <span className="text-lg font-bold text-white">{v.plate}</span>
+                      <span className="text-gray-400 ml-2">{v.model}</span>
+                    </div>
+                    <Badge className="bg-red-500/20 text-red-500">
+                      {v.days_in_stage} dias
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-500">Status:</span>
+                      <span className="text-white ml-2">{v.status}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Mecânico:</span>
+                      <span className="text-white ml-2">{v.mechanic_name || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {getDelayedVehicles().length === 0 && (
+                <p className="text-center text-gray-400 py-8">Nenhum veículo atrasado!</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

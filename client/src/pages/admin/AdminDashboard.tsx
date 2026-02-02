@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs removido - usando links diretos
 import {
   LayoutDashboard,
   Eye,
@@ -246,265 +246,90 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          {/* Tabs: Operacional, Financeiro, Produtividade, Agenda */}
-          <Tabs defaultValue="operacional" className="w-full">
-            <TabsList className="bg-transparent border-b border-gray-800 w-full justify-start rounded-none h-auto p-0 mb-6">
+          {/* Tabs: Operacional, Financeiro, Produtividade, Agenda - Todos como links */}
+          <div className="w-full">
+            <div className="bg-transparent border-b border-gray-800 w-full flex justify-start h-auto p-0 mb-6">
               <Link href="/admin/operacional">
-                <div className="flex items-center px-4 py-3 text-gray-400 hover:text-blue-400 cursor-pointer">
+                <div className="flex items-center px-4 py-3 text-gray-400 hover:text-blue-400 cursor-pointer border-b-2 border-transparent hover:border-blue-400">
                   <Wrench className="h-4 w-4 mr-2" />
                   Operacional
                 </div>
               </Link>
-              <TabsTrigger 
-                value="operacional" 
-                className="hidden"
-              >
-                Operacional
-              </TabsTrigger>
-              <TabsTrigger 
-                value="financeiro"
-                className="data-[state=active]:bg-transparent data-[state=active]:text-green-400 data-[state=active]:border-b-2 data-[state=active]:border-green-400 rounded-none px-4 py-3 text-gray-400"
-              >
-                <DollarSign className="h-4 w-4 mr-2" />
-                Financeiro
-              </TabsTrigger>
-              <TabsTrigger 
-                value="produtividade"
-                className="data-[state=active]:bg-transparent data-[state=active]:text-purple-400 data-[state=active]:border-b-2 data-[state=active]:border-purple-400 rounded-none px-4 py-3 text-gray-400"
-              >
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Produtividade
-              </TabsTrigger>
-              <TabsTrigger 
-                value="agenda"
-                className="data-[state=active]:bg-transparent data-[state=active]:text-orange-400 data-[state=active]:border-b-2 data-[state=active]:border-orange-400 rounded-none px-4 py-3 text-gray-400"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                Agenda
-              </TabsTrigger>
-            </TabsList>
+              <Link href="/admin/financeiro">
+                <div className="flex items-center px-4 py-3 text-gray-400 hover:text-green-400 cursor-pointer border-b-2 border-transparent hover:border-green-400">
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Financeiro
+                </div>
+              </Link>
+              <Link href="/admin/produtividade">
+                <div className="flex items-center px-4 py-3 text-gray-400 hover:text-purple-400 cursor-pointer border-b-2 border-transparent hover:border-purple-400">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Produtividade
+                </div>
+              </Link>
+              <Link href="/admin/agenda-mecanicos">
+                <div className="flex items-center px-4 py-3 text-gray-400 hover:text-orange-400 cursor-pointer border-b-2 border-transparent hover:border-orange-400">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Agenda Mec.
+                </div>
+              </Link>
+            </div>
 
-            {/* Tab Operacional */}
-            <TabsContent value="operacional" className="mt-0">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Veículos no Pátio */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-blue-500/10">
-                      <Car className="h-6 w-6 text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{veiculosNoPatio}</p>
-                      <p className="text-gray-500 text-sm">Veículos no Pátio</p>
-                    </div>
-                  </CardContent>
-                </Card>
+            {/* Cards do Dashboard - Resumo */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Veículos no Pátio */}
+              <Card className="bg-[#1a1f26] border-gray-800">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-blue-500/10">
+                    <Car className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">{veiculosNoPatio}</p>
+                    <p className="text-gray-500 text-sm">Veículos no Pátio</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Agendamentos Hoje */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-cyan-500/10">
-                      <Calendar className="h-6 w-6 text-cyan-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{agendamentosHoje}</p>
-                      <p className="text-gray-500 text-sm">Agendamentos Hoje</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Agendamentos Hoje */}
+              <Card className="bg-[#1a1f26] border-gray-800">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-cyan-500/10">
+                    <Calendar className="h-6 w-6 text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">{agendamentosHoje}</p>
+                    <p className="text-gray-500 text-sm">Agendamentos Hoje</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Novos Clientes (Mês) */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-purple-500/10">
-                      <Users className="h-6 w-6 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{novosClientesMes}</p>
-                      <p className="text-gray-500 text-sm">Novos Clientes (Mês)</p>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Faturado (Mês) */}
+              <Card className="bg-[#1a1f26] border-gray-800">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-green-500/10">
+                    <DollarSign className="h-6 w-6 text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">R$ {faturadoMes.toLocaleString("pt-BR")}</p>
+                    <p className="text-gray-500 text-sm">Faturado (Mês)</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {/* Retorno do Mês */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-green-500/10">
-                      <TrendingUp className="h-6 w-6 text-green-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{retornoMes}</p>
-                      <p className="text-gray-500 text-sm">Retorno do Mês</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Tab Financeiro */}
-            <TabsContent value="financeiro" className="mt-0">
-              <div className="grid grid-cols-2 gap-4">
-                {/* Faturado (Mês) */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-green-500/10">
-                      <DollarSign className="h-6 w-6 text-green-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">R$ {faturadoMes.toLocaleString("pt-BR")}</p>
-                      <p className="text-gray-500 text-sm">Faturado (Mês)</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Agendamentos Hoje */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-cyan-500/10">
-                      <Calendar className="h-6 w-6 text-cyan-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{agendamentosHoje}</p>
-                      <p className="text-gray-500 text-sm">Agendamentos Hoje</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Valor p/ Ger. Hoje */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-yellow-500/10">
-                      <DollarSign className="h-6 w-6 text-yellow-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">R$ {valorGerarHoje.toLocaleString("pt-BR")}</p>
-                      <p className="text-gray-500 text-sm">Valor p/ Ger. Hoje</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Concluídos (Mês) */}
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-blue-500/10">
-                      <ClipboardList className="h-6 w-6 text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{concluidosMes}</p>
-                      <p className="text-gray-500 text-sm">Concluídos (Mês)</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Tab Produtividade */}
-            <TabsContent value="produtividade" className="mt-0">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-purple-500/10">
-                      <TrendingUp className="h-6 w-6 text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{stats.osEmExecucao}</p>
-                      <p className="text-gray-500 text-sm">Em Execução</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-green-500/10">
-                      <ClipboardList className="h-6 w-6 text-green-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{concluidosMes}</p>
-                      <p className="text-gray-500 text-sm">Concluídos (Mês)</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-orange-500/10">
-                      <Wrench className="h-6 w-6 text-orange-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{stats.osAguardandoPeca}</p>
-                      <p className="text-gray-500 text-sm">Aguardando Peça</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-red-500/10">
-                      <Users className="h-6 w-6 text-red-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{stats.osAguardandoAprovacao}</p>
-                      <p className="text-gray-500 text-sm">Aguardando Aprovação</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {/* Tab Agenda */}
-            <TabsContent value="agenda" className="mt-0">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-orange-500/10">
-                      <Calendar className="h-6 w-6 text-orange-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{agendamentosHoje}</p>
-                      <p className="text-gray-500 text-sm">Agendamentos Hoje</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#1a1f26] border-gray-800">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-blue-500/10">
-                      <Calendar className="h-6 w-6 text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-bold text-white">{stats.agendamentosSemana}</p>
-                      <p className="text-gray-500 text-sm">Agendamentos Semana</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-[#1a1f26] border-gray-800 col-span-2">
-                  <CardContent className="p-4">
-                    <h3 className="text-white font-medium mb-3">Próximos Agendamentos</h3>
-                    <div className="space-y-2">
-                      {agendamentosMock.slice(0, 3).map((ag) => (
-                        <div key={ag.id} className="flex items-center justify-between p-3 bg-[#252b33] rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                              <Calendar className="h-5 w-5 text-orange-400" />
-                            </div>
-                            <div>
-                              <p className="text-white font-medium">{ag.horaAgendamento} - {ag.dataAgendamento}</p>
-                              <p className="text-gray-400 text-sm">{ag.cliente}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-white">{ag.placa}</p>
-                            <p className="text-gray-400 text-sm">{ag.motivoVisita}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
+              {/* Retorno do Mês */}
+              <Card className="bg-[#1a1f26] border-gray-800">
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-purple-500/10">
+                    <TrendingUp className="h-6 w-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold text-white">{retornoMes}</p>
+                    <p className="text-gray-500 text-sm">Retorno do Mês</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
     </div>
