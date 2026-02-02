@@ -123,7 +123,7 @@ export type InsertRecurso = typeof recursos.$inferInsert;
  * 05_CLIENTES - Clientes cadastrados
  * TELAS: AdminClientes, AdminNovaOS, AdminOrdensServico, AdminOSDetalhes, Visão Cliente
  */
-export const clientes = mysqlTable("clientes", {
+export const clientes = mysqlTable("07_clientes", {
   id: int("id").autoincrement().primaryKey(),
   empresaId: int("empresaId"),
   nomeCompleto: varchar("nomeCompleto", { length: 255 }).notNull(),
@@ -149,7 +149,7 @@ export type InsertCliente = typeof clientes.$inferInsert;
  * 06_VEICULOS - Veículos dos clientes
  * TELAS: AdminClientes, AdminNovaOS, AdminOrdensServico, AdminOSDetalhes, AdminPatio, Visão Cliente
  */
-export const veiculos = mysqlTable("veiculos", {
+export const veiculos = mysqlTable("08_veiculos", {
   id: int("id").autoincrement().primaryKey(),
   clienteId: int("clienteId").notNull(),
   placa: varchar("placa", { length: 10 }).notNull(),
@@ -172,7 +172,7 @@ export type InsertVeiculo = typeof veiculos.$inferInsert;
  * 07_ORDEM_DE_SERVICO - Ordens de serviço principais
  * TELAS: AdminOrdensServico, AdminNovaOS, AdminOSDetalhes, AdminPatio, AdminPatioDetalhes, AdminDashboard, AdminFinanceiro, AdminPainelTV
  */
-export const ordensServico = mysqlTable("ordens_servico", {
+export const ordensServico = mysqlTable("09_ordens_servico", {
   id: int("id").autoincrement().primaryKey(),
   numeroOs: varchar("numeroOs", { length: 20 }),
   dataEntrada: timestamp("dataEntrada").defaultNow(),
@@ -237,7 +237,7 @@ export type InsertCrm = typeof crm.$inferInsert;
  * 09_ORDEM_DE_SERVICO_HISTORICO - Histórico de alterações nas OS
  * TELAS: AdminOSDetalhes, Relatórios
  */
-export const ordensServicoHistorico = mysqlTable("ordens_servico_historico", {
+export const ordensServicoHistorico = mysqlTable("10_ordens_servico_historico", {
   id: int("id").autoincrement().primaryKey(),
   ordemServicoId: int("ordemServicoId").notNull(),
   statusAnterior: varchar("statusAnterior", { length: 50 }),
@@ -255,7 +255,7 @@ export type InsertOrdemServicoHistorico = typeof ordensServicoHistorico.$inferIn
  * 10_ORDEM_DE_SERVICO_DETALHADA - Itens/serviços da OS
  * TELAS: AdminOSDetalhes, AdminFinanceiro
  */
-export const ordensServicoItens = mysqlTable("ordens_servico_itens", {
+export const ordensServicoItens = mysqlTable("11_ordens_servico_itens", {
   id: int("id").autoincrement().primaryKey(),
   ordemServicoId: int("ordemServicoId").notNull(),
   tipo: varchar("tipo", { length: 50 }), // peca, mao_de_obra
@@ -318,7 +318,7 @@ export type InsertListaStatus = typeof listaStatus.$inferInsert;
  * 13_AGENDAMENTOS - Agendamentos de serviços
  * TELAS: AdminAgendamentos, AdminDashboard, AdminPainelTV
  */
-export const agendamentos = mysqlTable("agendamentos", {
+export const agendamentos = mysqlTable("12_agendamentos", {
   id: int("id").autoincrement().primaryKey(),
   clienteId: int("clienteId"),
   veiculoId: int("veiculoId"),
@@ -339,7 +339,7 @@ export type InsertAgendamento = typeof agendamentos.$inferInsert;
  * 14_FATURAMENTO - Faturamento/Financeiro
  * TELAS: AdminFinanceiro, AdminDashboard, AdminDashboardOverview
  */
-export const faturamento = mysqlTable("faturamento", {
+export const faturamento = mysqlTable("95_faturamento", {
   id: int("id").autoincrement().primaryKey(),
   ordemServicoId: int("ordemServicoId"),
   clienteId: int("clienteId"),

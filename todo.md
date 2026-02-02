@@ -278,6 +278,6 @@
 - [x] Criar tabela 10_ordens_servico_historico
 - [x] Criar tabela 12_agendamentos
 - [x] Criar tabela 95_faturamento
-- [ ] Importar dados de 07_clientes.xlsx (arquivo contém veículos, não clientes)
+- [x] Importar dados de 07_clientes.xlsx (1 cliente: NELSON VOLPATO)
 - [ ] Importar dados de 08_veiculos.xlsx (arquivo contém veículos)
 - [x] Gerar relatório de regras de cadastro (RELATORIO_REGRAS_CADASTRO.md)
