@@ -196,3 +196,58 @@
 - [x] Filtros por consultor e busca por placa/OS
 - [x] Recursos da oficina com status (ocupado/livre)
 - [x] AdminPatioDetalhes conectado ao banco
+
+## Importação de Dados Reais - Empresas
+- [x] Ler CSV empresas_20260202_100005.csv
+- [x] Limpar tabela empresas existente
+- [x] Importar dados do CSV para tabela empresas (3 registros)
+- [x] Verificar importação - DOCTOR AUTO PRIME, DOCTOR AUTO BOSCH, GARAGEM 347
+
+## Renomear Tabela empresas → 00_empresas
+- [x] Renomear tabela no banco de dados
+- [x] Atualizar schema.ts do Drizzle
+- [x] Verificar funcionamento - 3 registros mantidos
+
+## Renomear e Importar 01_colaboradores
+- [x] Renomear tabela colaboradores para 01_colaboradores
+- [x] Ler CSV colaboradores_20260202_100823.csv
+- [x] Calcular id_colab (3 dígitos empresa + 3 telefone + 3 CPF)
+- [x] Importar dados para 01_colaboradores (10 registros)
+- [x] Verificar importação
+
+## Renomear niveis_acesso → 02_nivelDeAcesso
+- [x] Renomear tabela no banco de dados
+- [x] Atualizar schema.ts
+- [x] Verificar funcionamento
+
+## Renomear e Importar 03_mecanicos
+- [x] Renomear tabela mecanicos para 03_mecanicos
+- [x] Ler CSV mecanicos_20260202_101806.csv
+- [x] Importar dados para 03_mecanicos (12 mecânicos)
+- [x] Verificar importação
+
+## Renomear 04_lista_status, 05_pendencias, 06_recursos
+- [x] Renomear lista_status para 04_lista_status
+- [x] Renomear pendencias para 05_pendencias
+- [x] Renomear recursos para 06_recursos
+- [x] Importar dados de recursos do CSV (18 recursos)
+- [x] Atualizar schema.ts
+- [x] Verificar funcionamento
+
+## Renomear 97_ANALISE_PROMOCOES, 98_SERVIÇOS, 99_CRM
+- [x] Renomear analise_promocoes para 97_ANALISE_PROMOCOES (já estava)
+- [x] Renomear servicos_catalogo para 98_SERVICOS
+- [x] Renomear crm para 99_CRM
+- [x] Atualizar schema.ts
+- [x] Verificar funcionamento
+
+## Atualizar 04_lista_status
+- [x] Ler CSV workflow_etapas_rows.csv
+- [x] Limpar tabela 04_lista_status
+- [x] Importar dados completos do CSV (9 status)
+- [x] Verificar importação
+
+## Atualizar código para usar novos nomes de tabelas
+- [x] Verificar erros de compilação - Nenhum erro TypeScript/LSP
+- [x] Servidor rodando normalmente
+- [x] Sistema pronto para testes

@@ -26,7 +26,7 @@ export type InsertUser = typeof users.$inferInsert;
  * 00_EMPRESAS - Empresas do grupo (Doctor Auto Prime, Pombal, Garage 347)
  * TELAS: AdminDashboard, AdminDashboardOverview, Configurações
  */
-export const empresas = mysqlTable("empresas", {
+export const empresas = mysqlTable("00_empresas", {
   id: int("id").autoincrement().primaryKey(),
   razaoSocial: varchar("razaoSocial", { length: 255 }),
   nomeEmpresa: varchar("nomeEmpresa", { length: 255 }).notNull(),
@@ -40,10 +40,10 @@ export type Empresa = typeof empresas.$inferSelect;
 export type InsertEmpresa = typeof empresas.$inferInsert;
 
 /**
- * 04_NIVEL_DE_ACESSO - Níveis de acesso do sistema
+ * 02_NIVEL_DE_ACESSO - Níveis de acesso do sistema
  * TELAS: Login, Configurações, controle de permissões em todas as telas
  */
-export const niveisAcesso = mysqlTable("niveis_acesso", {
+export const niveisAcesso = mysqlTable("02_nivelDeAcesso", {
   id: int("id").autoincrement().primaryKey(),
   tipoUsuario: varchar("tipoUsuario", { length: 100 }).notNull(),
   nivelAcesso: int("nivelAcesso").notNull().default(1),
@@ -59,7 +59,7 @@ export type InsertNivelAcesso = typeof niveisAcesso.$inferInsert;
  * 01_COLABORADORES - Colaboradores das empresas (Direção, Gestão, Consultores)
  * TELAS: Login, AdminDashboard, AdminAgendaMecanicos, Configurações
  */
-export const colaboradores = mysqlTable("colaboradores", {
+export const colaboradores = mysqlTable("01_colaboradores", {
   id: int("id").autoincrement().primaryKey(),
   empresaId: int("empresaId"),
   nome: varchar("nome", { length: 255 }).notNull(),
@@ -78,10 +78,10 @@ export type Colaborador = typeof colaboradores.$inferSelect;
 export type InsertColaborador = typeof colaboradores.$inferInsert;
 
 /**
- * 02_MECANICOS - Mecânicos das oficinas
+ * 03_MECANICOS - Mecânicos das oficinas
  * TELAS: AdminAgendaMecanicos, AdminMechanicAnalytics, AdminMechanicFeedback, AdminProdutividade, AdminPainelTV
  */
-export const mecanicos = mysqlTable("mecanicos", {
+export const mecanicos = mysqlTable("03_mecanicos", {
   id: int("id").autoincrement().primaryKey(),
   empresaId: int("empresaId"),
   nome: varchar("nome", { length: 255 }).notNull(),
@@ -104,7 +104,7 @@ export type InsertMecanico = typeof mecanicos.$inferInsert;
  * 03_RECURSOS - Recursos da oficina (Elevadores, Boxes, Equipamentos)
  * TELAS: AdminOperacional, AdminPatio, AdminProdutividade
  */
-export const recursos = mysqlTable("recursos", {
+export const recursos = mysqlTable("06_recursos", {
   id: int("id").autoincrement().primaryKey(),
   empresaId: int("empresaId"),
   nomeRecurso: varchar("nomeRecurso", { length: 255 }).notNull(),
@@ -210,7 +210,7 @@ export type InsertOrdemServico = typeof ordensServico.$inferInsert;
  * 08_CRM - Dados de relacionamento com cliente
  * TELAS: AdminClientes, AdminDashboard, Relatórios
  */
-export const crm = mysqlTable("crm", {
+export const crm = mysqlTable("99_CRM", {
   id: int("id").autoincrement().primaryKey(),
   clienteId: int("clienteId").notNull(),
   marcaCarro: varchar("marcaCarro", { length: 100 }),
@@ -282,7 +282,7 @@ export type InsertOrdemServicoItem = typeof ordensServicoItens.$inferInsert;
  * 11_ANALISE_PROMOCOES - Análise de promoções
  * TELAS: AdminDashboard, Relatórios
  */
-export const analisePromocoes = mysqlTable("analise_promocoes", {
+export const analisePromocoes = mysqlTable("97_ANALISE_PROMOCOES", {
   id: int("id").autoincrement().primaryKey(),
   dataPromocao: date("dataPromocao"),
   nomePromocao: varchar("nomePromocao", { length: 255 }),
@@ -302,7 +302,7 @@ export type InsertAnalisePromocao = typeof analisePromocoes.$inferInsert;
  * 12_LISTA_STATUS - Status possíveis das OS
  * TELAS: AdminOrdensServico, AdminOSDetalhes, AdminPatio, AdminOperacional
  */
-export const listaStatus = mysqlTable("lista_status", {
+export const listaStatus = mysqlTable("04_lista_status", {
   id: int("id").autoincrement().primaryKey(),
   status: varchar("status", { length: 100 }).notNull(),
   ordem: int("ordem").default(0),
@@ -359,7 +359,7 @@ export type InsertFaturamento = typeof faturamento.$inferInsert;
  * 15_SERVICOS_CATALOGO - Catálogo de serviços
  * TELAS: AdminServicos, AdminNovaOS, AdminOSDetalhes
  */
-export const servicosCatalogo = mysqlTable("servicos_catalogo", {
+export const servicosCatalogo = mysqlTable("98_SERVICOS", {
   id: int("id").autoincrement().primaryKey(),
   nome: varchar("nome", { length: 255 }).notNull(),
   descricao: text("descricao"),
@@ -379,7 +379,7 @@ export type InsertServicoCatalogo = typeof servicosCatalogo.$inferInsert;
  * 16_PENDENCIAS - Pendências da equipe
  * TELAS: AdminDashboard, AdminPendencias
  */
-export const pendencias = mysqlTable("pendencias", {
+export const pendencias = mysqlTable("05_pendencias", {
   id: int("id").autoincrement().primaryKey(),
   nomePendencia: varchar("nomePendencia", { length: 255 }).notNull(),
   responsavelId: int("responsavelId").notNull(), // colaborador responsável
