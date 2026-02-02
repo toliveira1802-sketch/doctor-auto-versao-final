@@ -1,150 +1,117 @@
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, TrendingUp, TrendingDown, Users, Car, FileText, DollarSign, Calendar, Wrench, CheckCircle, AlertCircle } from "lucide-react";
-import { dashboardStatsMock, ordensServicoMock, clientesMock, veiculosMock, mecanicosMock } from "@/lib/mockData";
+import { useLocation } from "wouter";
+import { ArrowLeft, Activity, FileText, Clock, Wrench, CheckCircle } from "lucide-react";
+import { AdminLayout } from "@/components/AdminLayout";
+
+// Mock data
+const ordensServicoMock = [
+  { id: 1, numeroOs: 'OS-0001', placa: 'ABC-1234', veiculo: 'Honda Civic 2020', cliente: 'João Silva', status: 'diagnostico', progresso: 10 },
+  { id: 2, numeroOs: 'OS-0002', placa: 'DEF-5678', veiculo: 'Hyundai HB20 2021', cliente: 'Maria Santos', status: 'orcamento', progresso: 25 },
+  { id: 3, numeroOs: 'OS-0003', placa: 'GHI-9012', veiculo: 'VW Polo 2022', cliente: 'Pedro Lima', status: 'aguardando_aprovacao', progresso: 30 },
+  { id: 4, numeroOs: 'OS-0004', placa: 'JKL-3456', veiculo: 'Chevrolet Onix 2019', cliente: 'Ana Costa', status: 'em_execucao', progresso: 65 },
+  { id: 5, numeroOs: 'OS-0005', placa: 'MNO-7890', veiculo: 'Jeep Compass 2023', cliente: 'Carlos Souza', status: 'concluido', progresso: 100 },
+];
+
+const statusConfig: Record<string, { label: string; color: string; bgSolid: string; icon: React.ElementType }> = {
+  diagnostico: { label: 'Diagnóstico', color: 'bg-blue-500/10 text-blue-400 border-blue-500/30', bgSolid: 'bg-blue-500', icon: Activity },
+  orcamento: { label: 'Orçamento', color: 'bg-purple-500/10 text-purple-400 border-purple-500/30', bgSolid: 'bg-purple-500', icon: FileText },
+  aguardando_aprovacao: { label: 'Aguard. Aprovação', color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30', bgSolid: 'bg-yellow-500', icon: Clock },
+  em_execucao: { label: 'Em Execução', color: 'bg-orange-500/10 text-orange-400 border-orange-500/30', bgSolid: 'bg-orange-500', icon: Wrench },
+  concluido: { label: 'Concluído', color: 'bg-green-500/10 text-green-400 border-green-500/30', bgSolid: 'bg-green-500', icon: CheckCircle },
+  entregue: { label: 'Entregue', color: 'bg-slate-500/10 text-slate-400 border-slate-500/30', bgSolid: 'bg-slate-500', icon: CheckCircle },
+};
+
+const statusList = Object.entries(statusConfig)
+  .filter(([k]) => k !== 'entregue')
+  .map(([id, v]) => ({ id, ...v }));
 
 export default function AdminDashboardOverview() {
-  const stats = dashboardStatsMock;
-
-  const statCards = [
-    { title: "Veículos no Pátio", value: ordensServicoMock.length, icon: Car, color: "text-blue-500", bgColor: "bg-blue-500/10" },
-    { title: "Agendamentos Hoje", value: stats.agendamentosHoje, icon: Calendar, color: "text-purple-500", bgColor: "bg-purple-500/10" },
-    { title: "Faturamento do Mês", value: `R$ ${stats.faturamentoMes.toLocaleString("pt-BR")}`, icon: DollarSign, color: "text-emerald-500", bgColor: "bg-emerald-500/10", change: 15 },
-    { title: "Aguardando Aprovação", value: stats.osAguardandoAprovacao, icon: AlertCircle, color: "text-amber-500", bgColor: "bg-amber-500/10" },
-    { title: "Concluídos Hoje", value: stats.osConcluidas, icon: CheckCircle, color: "text-green-500", bgColor: "bg-green-500/10" },
-    { title: "Clientes Ativos", value: clientesMock.length, icon: Users, color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
-  ];
+  const [, setLocation] = useLocation();
+  
+  const osAtivas = ordensServicoMock.filter(os => !['entregue'].includes(os.status));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/admin">
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-red-500" />
-            Visão Geral
-          </h1>
-          <p className="text-gray-400">Resumo completo da operação</p>
-        </div>
-      </div>
+    <AdminLayout>
+      <div className="flex-1 flex flex-col bg-slate-950">
+        {/* Header */}
+        <header className="h-12 bg-slate-900 border-b border-slate-800 flex items-center px-4">
+          <button onClick={() => setLocation('/admin')} className="text-slate-400 hover:text-white mr-3">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <h1 className="text-white font-semibold text-sm">Visão Geral</h1>
+          <span className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+        </header>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        {statCards.map((stat) => (
-          <Card key={stat.title} className="bg-white/5 border-white/10">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-400">{stat.title}</p>
-                  <p className="text-2xl font-bold text-white">{stat.value}</p>
-                  {stat.change !== undefined && (
-                    <div className="flex items-center gap-1 text-xs text-emerald-400">
-                      <TrendingUp className="w-3 h-3" />
-                      <span>{stat.change}% vs mês anterior</span>
-                    </div>
-                  )}
+        {/* Content */}
+        <div className="flex-1 p-4 overflow-auto">
+          {/* Status Cards */}
+          <div className="grid grid-cols-5 gap-3 mb-4">
+            {statusList.map(s => (
+              <div key={s.id} className="bg-slate-900 border border-slate-800 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-2 h-2 rounded-full ${s.bgSolid}`}></div>
+                  <span className="text-xs text-slate-400">{s.label}</span>
                 </div>
-                <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <Card className="bg-white/5 border-white/10 mb-6">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Wrench className="w-5 h-5 text-red-500" />
-            Ações Rápidas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link href="/admin/nova-os">
-              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <Car className="w-5 h-5 text-red-500" />
-                </div>
-                <span className="text-sm text-white text-center">Nova OS</span>
-              </div>
-            </Link>
-            <Link href="/admin/patio">
-              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Car className="w-5 h-5 text-blue-500" />
-                </div>
-                <span className="text-sm text-white text-center">Ver Pátio</span>
-              </div>
-            </Link>
-            <Link href="/admin/agendamentos">
-              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Calendar className="w-5 h-5 text-purple-500" />
-                </div>
-                <span className="text-sm text-white text-center">Agendamentos</span>
-              </div>
-            </Link>
-            <Link href="/admin/financeiro">
-              <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <DollarSign className="w-5 h-5 text-emerald-500" />
-                </div>
-                <span className="text-sm text-white text-center">Financeiro</span>
-              </div>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Mecânicos Performance */}
-      <Card className="bg-white/5 border-white/10 mb-6">
-        <CardHeader>
-          <CardTitle className="text-white">Performance dos Mecânicos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {mecanicosMock.slice(0, 4).map((mec) => (
-              <div key={mec.id} className="bg-white/5 rounded-lg p-4">
-                <p className="text-white font-medium">{mec.nome}</p>
-                <p className="text-gray-400 text-sm">{mec.especialidade}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-green-400">+{mec.qtdePositivos}</span>
-                  <span className="text-gray-500">/</span>
-                  <span className="text-red-400">-{mec.qtdeNegativos}</span>
-                </div>
+                <p className="text-xl font-bold text-white">
+                  {ordensServicoMock.filter(os => os.status === s.id).length}
+                </p>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* OS por Status */}
-      <Card className="bg-white/5 border-white/10">
-        <CardHeader>
-          <CardTitle className="text-white">Ordens de Serviço por Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {["Diagnóstico", "Orçamento", "Aguardando Aprovação", "Em Execução", "Pronto"].map((status) => {
-              const count = ordensServicoMock.filter(os => os.status === status).length;
-              return (
-                <div key={status} className="bg-white/5 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-white">{count}</p>
-                  <p className="text-gray-400 text-sm">{status}</p>
-                </div>
-              );
-            })}
+          {/* Tabela OS em Andamento */}
+          <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+            <div className="p-3 border-b border-slate-800">
+              <h3 className="text-white font-semibold text-sm">OS em Andamento</h3>
+            </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-800">
+                  <th className="text-left text-xs text-slate-400 px-3 py-2">OS</th>
+                  <th className="text-left text-xs text-slate-400 px-3 py-2">Veículo</th>
+                  <th className="text-left text-xs text-slate-400 px-3 py-2">Cliente</th>
+                  <th className="text-left text-xs text-slate-400 px-3 py-2">Status</th>
+                  <th className="text-left text-xs text-slate-400 px-3 py-2">Progresso</th>
+                </tr>
+              </thead>
+              <tbody>
+                {osAtivas.map(os => {
+                  const c = statusConfig[os.status];
+                  return (
+                    <tr 
+                      key={os.id} 
+                      onClick={() => setLocation(`/admin/os/${os.id}`)} 
+                      className="border-b border-slate-800 hover:bg-slate-800/50 cursor-pointer"
+                    >
+                      <td className="px-3 py-2 text-white font-mono">{os.numeroOs}</td>
+                      <td className="px-3 py-2">
+                        <p className="text-white font-bold">{os.placa}</p>
+                        <p className="text-slate-400 text-xs">{os.veiculo}</p>
+                      </td>
+                      <td className="px-3 py-2 text-white">{os.cliente}</td>
+                      <td className="px-3 py-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${c.color}`}>
+                          {c.label}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-slate-700 rounded-full">
+                            <div 
+                              className="h-full bg-red-500 rounded-full transition-all" 
+                              style={{ width: `${os.progresso}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-xs text-slate-400">{os.progresso}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }

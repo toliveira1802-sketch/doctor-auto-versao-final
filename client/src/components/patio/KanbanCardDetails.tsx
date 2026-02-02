@@ -31,33 +31,10 @@ import {
   MapPin,
   Palette,
 } from "lucide-react";
+import { type VeiculoKanban } from "@/hooks/usePatioKanban";
 import { cn } from "@/lib/utils";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-export interface VeiculoKanban {
-  id: number;
-  placa: string;
-  marca: string;
-  modelo: string;
-  ano?: string;
-  cor?: string;
-  cliente: string;
-  clienteTelefone?: string;
-  servico: string;
-  categoria: string;
-  orderNumber: string;
-  entrada: string;
-  entradaData: Date;
-  previsaoEntrega?: string;
-  mecanico?: string;
-  mecanicoId?: number;
-  recurso?: string;
-  valorAprovado: number;
-  total: number;
-  emTerceiros: boolean;
-  status: string;
-}
 
 interface KanbanCardDetailsProps {
   veiculo: VeiculoKanban | null;
@@ -66,25 +43,21 @@ interface KanbanCardDetailsProps {
   onUpdate?: () => void;
 }
 
+interface Mechanic {
+  id: string;
+  name: string;
+}
+
 // Recursos fixos do pátio
 const RECURSOS_PATIO = [
-  { id: 'elevador-1', nome: 'Elevador 1' },
-  { id: 'elevador-2', nome: 'Elevador 2' },
-  { id: 'elevador-3', nome: 'Elevador 3' },
-  { id: 'elevador-4', nome: 'Elevador 4' },
-  { id: 'elevador-5', nome: 'Elevador 5' },
-  { id: 'elevador-6', nome: 'Elevador 6' },
-  { id: 'elevador-7', nome: 'Elevador 7' },
-  { id: 'elevador-8', nome: 'Elevador 8' },
-  { id: 'elevador-9', nome: 'Elevador 9 (Diagnóstico)' },
   { id: 'box-a', nome: 'Box A' },
   { id: 'box-b', nome: 'Box B' },
   { id: 'box-c', nome: 'Box C' },
   { id: 'box-d', nome: 'Box D' },
   { id: 'box-e', nome: 'Box E' },
-  { id: 'rampa', nome: 'Rampa' },
-  { id: 'dinamometro', nome: 'Dinamômetro' },
-  { id: 'vcds', nome: 'VCDS' },
+  { id: 'elevador-1', nome: 'Elevador 1' },
+  { id: 'elevador-2', nome: 'Elevador 2' },
+  { id: 'elevador-3', nome: 'Elevador 3' },
   { id: 'recepcao', nome: 'Recepção' },
   { id: 'externo', nome: 'Área Externa' },
 ];
@@ -104,27 +77,28 @@ const categoriaCores: Record<string, string> = {
 
 export function KanbanCardDetails({ veiculo, open, onOpenChange, onUpdate }: KanbanCardDetailsProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
   const [selectedMechanic, setSelectedMechanic] = useState<string | null>(null);
   const [selectedRecurso, setSelectedRecurso] = useState<string | null>(null);
 
-  // Buscar mecânicos do banco
-  const { data: mecanicos } = trpc.mecanicos.list.useQuery();
-  
-  // Mutation para atualizar OS
-  const updateOS = trpc.ordensServico.update.useMutation({
-    onSuccess: () => {
-      toast.success('Atualizado com sucesso');
-      onUpdate?.();
-    },
-    onError: () => {
-      toast.error('Erro ao atualizar');
-    }
-  });
+  // Carregar mecânicos
+  useEffect(() => {
+    const fetchMechanics = async () => {
+      const { data } = await supabase
+        .from('mechanics')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (data) setMechanics(data);
+    };
+    fetchMechanics();
+  }, []);
 
   // Sincronizar valores quando veiculo mudar
   useEffect(() => {
     if (veiculo) {
-      setSelectedMechanic(veiculo.mecanicoId?.toString() || null);
+      setSelectedMechanic(veiculo.mecanicoId || null);
       setSelectedRecurso(veiculo.recurso || null);
     }
   }, [veiculo]);
@@ -136,10 +110,18 @@ export function KanbanCardDetails({ veiculo, open, onOpenChange, onUpdate }: Kan
   const handleToggleTerceiros = async () => {
     setIsUpdating(true);
     try {
-      await updateOS.mutateAsync({
-        id: veiculo.id,
-        emTerceiros: !veiculo.emTerceiros
-      });
+      const { error } = await supabase
+        .from('service_orders')
+        .update({ em_terceiros: !veiculo.emTerceiros })
+        .eq('id', veiculo.id);
+
+      if (error) throw error;
+
+      toast.success(veiculo.emTerceiros ? 'Veículo removido de terceiros' : 'Veículo marcado como em terceiros');
+      onUpdate?.();
+    } catch (error) {
+      console.error('Erro ao atualizar:', error);
+      toast.error('Erro ao atualizar status');
     } finally {
       setIsUpdating(false);
     }
@@ -148,12 +130,20 @@ export function KanbanCardDetails({ veiculo, open, onOpenChange, onUpdate }: Kan
   const handleMechanicChange = async (mechanicId: string) => {
     setIsUpdating(true);
     try {
-      const newMechanicId = mechanicId === 'none' ? undefined : parseInt(mechanicId);
-      await updateOS.mutateAsync({
-        id: veiculo.id,
-        mecanicoId: newMechanicId
-      });
-      setSelectedMechanic(mechanicId === 'none' ? null : mechanicId);
+      const newMechanicId = mechanicId === 'none' ? null : mechanicId;
+      const { error } = await supabase
+        .from('service_orders')
+        .update({ mechanic_id: newMechanicId })
+        .eq('id', veiculo.id);
+
+      if (error) throw error;
+
+      setSelectedMechanic(newMechanicId);
+      toast.success('Mecânico atualizado');
+      onUpdate?.();
+    } catch (error) {
+      console.error('Erro ao atualizar mecânico:', error);
+      toast.error('Erro ao atualizar mecânico');
     } finally {
       setIsUpdating(false);
     }
@@ -162,12 +152,20 @@ export function KanbanCardDetails({ veiculo, open, onOpenChange, onUpdate }: Kan
   const handleRecursoChange = async (recurso: string) => {
     setIsUpdating(true);
     try {
-      const newRecurso = recurso === 'none' ? undefined : recurso;
-      await updateOS.mutateAsync({
-        id: veiculo.id,
-        recurso: newRecurso
-      });
-      setSelectedRecurso(newRecurso ?? null);
+      const newRecurso = recurso === 'none' ? null : recurso;
+      const { error } = await supabase
+        .from('service_orders')
+        .update({ recurso: newRecurso })
+        .eq('id', veiculo.id);
+
+      if (error) throw error;
+
+      setSelectedRecurso(newRecurso);
+      toast.success('Local atualizado');
+      onUpdate?.();
+    } catch (error) {
+      console.error('Erro ao atualizar recurso:', error);
+      toast.error('Erro ao atualizar local');
     } finally {
       setIsUpdating(false);
     }
@@ -230,9 +228,9 @@ export function KanbanCardDetails({ veiculo, open, onOpenChange, onUpdate }: Kan
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
                   <SelectItem value="none">Sem mecânico</SelectItem>
-                  {mecanicos?.map((mec) => (
-                    <SelectItem key={mec.id} value={mec.id.toString()}>
-                      {mec.nome}
+                  {mechanics.map((mec) => (
+                    <SelectItem key={mec.id} value={mec.id}>
+                      {mec.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -302,9 +300,7 @@ export function KanbanCardDetails({ veiculo, open, onOpenChange, onUpdate }: Kan
                 <div className="flex items-center gap-2">
                   <Phone className="w-3.5 h-3.5 text-muted-foreground" />
                   <a 
-                    href={`https://wa.me/55${veiculo.clienteTelefone.replace(/\D/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`tel:${veiculo.clienteTelefone}`}
                     className="text-primary hover:underline"
                   >
                     {veiculo.clienteTelefone}
@@ -349,7 +345,7 @@ export function KanbanCardDetails({ veiculo, open, onOpenChange, onUpdate }: Kan
               </div>
               <p className={cn(
                 "text-sm font-bold",
-                diasNoPatio > 7 ? "text-destructive" : diasNoPatio > 3 ? "text-amber-500" : "text-emerald-500"
+                diasNoPatio > 7 ? "text-destructive" : diasNoPatio > 3 ? "text-warning" : "text-emerald-500"
               )}>
                 {diasNoPatio} {diasNoPatio === 1 ? 'dia' : 'dias'}
               </p>
