@@ -34,7 +34,9 @@ export default function AdminNovaOS() {
   const { data: clientes = [], isLoading: loadingClientes } = trpc.clientes.list.useQuery();
   const { data: veiculos = [], isLoading: loadingVeiculos } = trpc.veiculos.list.useQuery();
 
-  // tRPC mutation
+  // tRPC mutations
+  const createClienteMutation = trpc.clientes.create.useMutation();
+  const createVeiculoMutation = trpc.veiculos.create.useMutation();
   const createOSMutation = trpc.ordensServico.create.useMutation({
     onSuccess: (data) => {
       if (data.success && data.id) {
@@ -80,19 +82,53 @@ export default function AdminNovaOS() {
     });
   };
 
-  const handleCriarNovoCliente = () => {
+  const handleCriarNovoCliente = async () => {
     if (!novoCliente.nome || !novoCliente.telefone || !novoCliente.placa || !novoCliente.veiculo) {
       toast.error("Preencha os campos obrigatórios: Nome, Telefone, Placa e Veículo");
       return;
     }
-    // Por enquanto, criar OS diretamente com os dados do novo cliente
-    createOSMutation.mutate({
-      placa: novoCliente.placa,
-      km: km ? parseInt(km) : undefined,
-      motivoVisita: motivoVisita,
-      descricaoProblema: descricaoProblema,
-      observacoes: `Novo cliente: ${novoCliente.nome} - ${novoCliente.telefone} - ${novoCliente.veiculo}`,
-    });
+    
+    try {
+      // 1. Criar cliente no banco
+      const clienteResult = await createClienteMutation.mutateAsync({
+        nomeCompleto: novoCliente.nome,
+        telefone: novoCliente.telefone,
+        cpf: novoCliente.cpf || undefined,
+        email: novoCliente.email || undefined,
+      });
+
+      if (!clienteResult.success || !clienteResult.id) {
+        toast.error("Erro ao criar cliente");
+        return;
+      }
+
+      // 2. Criar veículo vinculado ao cliente
+      const veiculoResult = await createVeiculoMutation.mutateAsync({
+        clienteId: clienteResult.id,
+        placa: novoCliente.placa,
+        modelo: novoCliente.veiculo,
+        marca: novoCliente.marca || undefined,
+        ano: novoCliente.ano ? parseInt(novoCliente.ano) : undefined,
+        kmAtual: km ? parseInt(km) : undefined,
+      });
+
+      if (!veiculoResult.success || !veiculoResult.id) {
+        toast.error("Erro ao criar veículo");
+        return;
+      }
+
+      // 3. Criar OS com cliente e veículo vinculados
+      createOSMutation.mutate({
+        clienteId: clienteResult.id,
+        veiculoId: veiculoResult.id,
+        placa: novoCliente.placa,
+        km: km ? parseInt(km) : undefined,
+        motivoVisita: motivoVisita,
+        descricaoProblema: descricaoProblema,
+      });
+    } catch (error) {
+      toast.error("Erro ao criar cliente/veículo");
+    }
   };
 
   return (

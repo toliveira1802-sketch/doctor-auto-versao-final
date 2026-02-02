@@ -181,3 +181,18 @@
 - [x] Adaptar AdminOrdensServico com layout completo (tabs, stats, tabela)
 - [x] Fluxo Nova OS → redirecionar para AdminOSDetalhes após criar
 - [x] Testar funcionamento completo - OS criada e redirecionada para AdminOSDetalhes
+
+## Passo 2: Conectar Clientes/Veículos ao Banco
+- [x] Atualizar AdminNovaOS para salvar cliente no banco ao criar
+- [x] Salvar veículo vinculado ao cliente no banco
+- [x] Vincular cliente/veículo à OS criada
+- [ ] Exibir dados reais do cliente/veículo na AdminOSDetalhes
+
+## Passo 3: Visão do Pátio (Kanban)
+- [x] Criar página AdminPatio com Kanban por status
+- [x] Colunas: Diagnóstico, Orçamento, Aprovação, Em Execução, Pronto
+- [x] Cards com placa, número OS, tempo no pátio, valor
+- [x] Drag and drop para mudar status
+- [x] Filtros por consultor e busca por placa/OS
+- [x] Recursos da oficina com status (ocupado/livre)
+- [x] AdminPatioDetalhes conectado ao banco

@@ -399,3 +399,33 @@ export async function getCrmByClienteId(clienteId: number) {
   const result = await db.select().from(crm).where(eq(crm.clienteId, clienteId)).limit(1);
   return result.length > 0 ? result[0] : null;
 }
+
+
+// Criar Cliente
+import { InsertCliente, InsertVeiculo } from "../drizzle/schema";
+
+export async function createCliente(cliente: InsertCliente) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(clientes).values(cliente);
+  return { id: result[0].insertId };
+}
+
+// Criar Veículo
+export async function createVeiculo(veiculo: InsertVeiculo) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.insert(veiculos).values(veiculo);
+  return { id: result[0].insertId };
+}
+
+// Buscar veículo por placa
+export async function getVeiculoByPlacaExact(placa: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db.select().from(veiculos).where(eq(veiculos.placa, placa)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}

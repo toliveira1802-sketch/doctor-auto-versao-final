@@ -32,6 +32,9 @@ import {
   updateItemOrdemServico,
   deleteItemOrdemServico,
   getCrmByClienteId,
+  createCliente,
+  createVeiculo,
+  getVeiculoByPlacaExact,
 } from "./db";
 
 export const appRouter = router({
@@ -146,6 +149,21 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await getClienteById(input.id);
       }),
+    create: publicProcedure
+      .input(z.object({
+        nomeCompleto: z.string(),
+        telefone: z.string().optional(),
+        cpf: z.string().optional(),
+        email: z.string().optional(),
+        empresaId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await createCliente(input);
+        if (!result) {
+          return { success: false, error: "Erro ao criar cliente" };
+        }
+        return { success: true, id: result.id };
+      }),
   }),
 
   // Veículos
@@ -157,6 +175,27 @@ export const appRouter = router({
       .input(z.object({ clienteId: z.number() }))
       .query(async ({ input }) => {
         return await getVeiculosByClienteId(input.clienteId);
+      }),
+    getByPlaca: publicProcedure
+      .input(z.object({ placa: z.string() }))
+      .query(async ({ input }) => {
+        return await getVeiculoByPlacaExact(input.placa);
+      }),
+    create: publicProcedure
+      .input(z.object({
+        clienteId: z.number(),
+        placa: z.string(),
+        modelo: z.string().optional(),
+        marca: z.string().optional(),
+        ano: z.number().optional(),
+        kmAtual: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await createVeiculo(input);
+        if (!result) {
+          return { success: false, error: "Erro ao criar veículo" };
+        }
+        return { success: true, id: result.id };
       }),
   }),
 
