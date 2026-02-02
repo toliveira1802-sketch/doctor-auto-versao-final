@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-// Tabs removido - usando links diretos
 import {
   LayoutDashboard,
   Eye,
@@ -14,20 +13,14 @@ import {
   Wrench,
   DollarSign,
   TrendingUp,
-  Users,
-  ClipboardList,
   ChevronDown,
   PlusCircle,
   BarChart3,
+  ClipboardList,
+  Home,
+  FileText,
 } from "lucide-react";
-import {
-  dashboardStatsMock,
-  ordensServicoMock,
-  agendamentosMock,
-  clientesMock,
-  empresasMock,
-  colaboradoresMock,
-} from "@/lib/mockData";
+import { trpc } from "@/lib/trpc";
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -35,37 +28,56 @@ export default function AdminDashboard() {
   const [empresaSelecionada, setEmpresaSelecionada] = useState(1);
   const [cadastroOpen, setCadastroOpen] = useState(false);
 
+  // Buscar dados do colaborador do localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("colaborador");
+    const stored = localStorage.getItem("doctorAuto_colaborador");
     if (stored) {
-      setColaborador(JSON.parse(stored));
+      try {
+        setColaborador(JSON.parse(stored));
+      } catch {
+        // Se não conseguir parsear, redirecionar para login
+        setLocation("/login");
+      }
+    } else {
+      // Se não tiver colaborador logado, redirecionar para login
+      setLocation("/login");
     }
-  }, []);
+  }, [setLocation]);
+
+  // Buscar dados do banco
+  const { data: empresas = [] } = trpc.empresas.list.useQuery();
+  const { data: ordensServico = [] } = trpc.ordensServico.list.useQuery();
+  // TODO: Criar procedure de pendencias quando tabela estiver pronta
+  const pendencias: any[] = [];
 
   const handleLogout = () => {
-    localStorage.removeItem("colaborador");
+    localStorage.removeItem("doctorAuto_colaborador");
     setLocation("/login");
   };
 
-  const stats = dashboardStatsMock;
-  
-  // Pendências do dia - equipe de consultores técnicos
-  const equipeConsultores = colaboradoresMock.filter(c => 
-    ["Consultor Técnico", "Direção"].includes(c.cargo) && c.empresaId === empresaSelecionada
-  ).slice(0, 3);
-  
-  // Métricas
-  const veiculosNoPatio = ordensServicoMock.filter(os => os.status !== "Entregue").length;
-  const agendamentosHoje = agendamentosMock.filter(a => a.dataAgendamento === "2026-02-03").length;
-  const novosClientesMes = clientesMock.length;
-  const retornoMes = ordensServicoMock.filter(os => os.status === "Entregue").length;
-  const faturadoMes = stats.faturamentoMes;
-  const valorGerarHoje = ordensServicoMock
-    .filter(os => os.status === "Pronto" || os.status === "Aguardando Retirada")
-    .reduce((acc, os) => acc + os.valorTotalOs, 0);
-  const concluidosMes = ordensServicoMock.filter(os => os.status === "Entregue").length;
+  // Métricas calculadas dos dados reais
+  const veiculosNoPatio = ordensServico.filter(os => os.status !== "Entregue" && os.status !== "Entregue ").length;
+  const agendamentosHoje = 0; // TODO: conectar com tabela de agendamentos
+  const faturadoMes = ordensServico
+    .filter(os => os.status === "Entregue" || os.status === "Entregue ")
+    .reduce((acc, os) => acc + (Number(os.valorTotalOs) || 0), 0);
+  const retornoMes = ordensServico.filter(os => os.status === "Entregue" || os.status === "Entregue ").length;
 
-  const empresaAtual = empresasMock.find(e => e.id === empresaSelecionada);
+  const empresaAtual = empresas.find(e => e.id === empresaSelecionada);
+
+  // Pendências do colaborador logado
+  const minhasPendencias = pendencias.filter((p: any) => 
+    p.responsavelId === colaborador?.id || p.criadorId === colaborador?.id
+  ).slice(0, 5);
+
+  // Se não tiver colaborador ainda, mostrar loading
+  if (!colaborador) {
+    return (
+      <div className="min-h-screen bg-[#0f1419] flex items-center justify-center">
+        <div className="text-white">Carregando...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0f1419] flex">
@@ -113,6 +125,16 @@ export default function AdminDashboard() {
             </Button>
           </Link>
           
+          <Link href="/admin/ordens-servico">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-gray-400 hover:text-white hover:bg-white/5 h-9 text-sm"
+            >
+              <FileText className="h-4 w-4" />
+              Ordens de Serviço
+            </Button>
+          </Link>
+          
           <Link href="/admin/patio">
             <Button
               variant="ghost"
@@ -156,6 +178,11 @@ export default function AdminDashboard() {
                 <Link href="/admin/servicos">
                   <Button variant="ghost" className="w-full justify-start text-gray-500 hover:text-white hover:bg-white/5 h-8 text-xs">
                     Serviços
+                  </Button>
+                </Link>
+                <Link href="/admin/ordens-servico">
+                  <Button variant="ghost" className="w-full justify-start text-gray-500 hover:text-white hover:bg-white/5 h-8 text-xs">
+                    Ordens Itens Serviço
                   </Button>
                 </Link>
               </div>
@@ -211,7 +238,7 @@ export default function AdminDashboard() {
         <header className="h-14 bg-[#1a1f26] border-b border-gray-800 flex items-center justify-between px-6">
           <div>
             <h1 className="text-white font-semibold">Dashboard</h1>
-            <p className="text-gray-500 text-xs">Bem-vindo de volta, {colaborador?.nome || "Usuário"}</p>
+            <p className="text-gray-500 text-xs">Bem-vindo de volta, {colaborador.nome}</p>
           </div>
           <div className="flex items-center gap-2">
             <select
@@ -219,7 +246,7 @@ export default function AdminDashboard() {
               onChange={(e) => setEmpresaSelecionada(Number(e.target.value))}
               className="bg-[#252b33] border border-gray-700 rounded px-3 py-1.5 text-white text-sm"
             >
-              {empresasMock.map((emp) => (
+              {empresas.map((emp) => (
                 <option key={emp.id} value={emp.id} className="bg-[#252b33]">
                   {emp.nomeEmpresa}
                 </option>
@@ -231,20 +258,42 @@ export default function AdminDashboard() {
 
         {/* Content */}
         <div className="flex-1 p-6 overflow-auto">
-          {/* Pendências do dia - Botão único que vai para página de pendências */}
-          <Link href="/admin/pendencias">
-            <Card className="bg-[#1a1f26] border-gray-800 mb-6 cursor-pointer hover:bg-[#252b33] transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <h2 className="text-white font-medium">Pendências do dia</h2>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+          {/* Pendências do dia - Card maior com lista de pendências */}
+          <Card className="bg-[#1a1f26] border-gray-800 mb-6">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <h2 className="text-white font-semibold text-lg">Pendências do dia</h2>
                 </div>
-              </CardContent>
-            </Card>
-          </Link>
+                <Link href="/admin/pendencias">
+                  <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">
+                    Ver todas
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+              
+              {minhasPendencias.length === 0 ? (
+                <p className="text-gray-400 text-base py-4">Nenhuma pendência para hoje. Bom trabalho!</p>
+              ) : (
+                <div className="space-y-3">
+                  {minhasPendencias.map((pendencia: any) => (
+                    <div key={pendencia.id} className="flex items-center justify-between p-3 bg-[#252b33] rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          pendencia.prioridade === 'alta' ? 'bg-red-500' :
+                          pendencia.prioridade === 'media' ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}></div>
+                        <span className="text-white text-base">{pendencia.nomePendencia}</span>
+                      </div>
+                      <span className="text-gray-500 text-sm">{pendencia.status}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Tabs: Operacional, Financeiro, Produtividade, Agenda - Todos como links */}
           <div className="w-full">
@@ -275,7 +324,7 @@ export default function AdminDashboard() {
               </Link>
             </div>
 
-            {/* Cards do Dashboard - Resumo */}
+            {/* Cards do Dashboard - Resumo com dados reais */}
             <div className="grid grid-cols-2 gap-4">
               {/* Veículos no Pátio */}
               <Card className="bg-[#1a1f26] border-gray-800">

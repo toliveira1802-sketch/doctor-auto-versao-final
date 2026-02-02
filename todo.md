@@ -251,3 +251,21 @@
 - [x] Verificar erros de compilação - Nenhum erro TypeScript/LSP
 - [x] Servidor rodando normalmente
 - [x] Sistema pronto para testes
+
+## CHECKLIST DEV - BUGS CRÍTICOS E ALTA PRIORIDADE
+
+### 🔴 CRÍTICO
+- [x] Corrigir quebra da página Dashboard - FUNCIONANDO
+- [x] Header: "bem-vindo de volta, usuário" → nome do usuário logado ("Bem-vindo de volta, Thales")
+- [x] Corrigir bug que expulsa o usuário do sistema - Login funcionando
+- [x] Adicionar navegação de retorno ao painel principal (AdminNovaOS, AdminOSDetalhes, AdminOrdensServico, AdminPatio)
+- [ ] Corrigir fluxo de Criar OS: página específica, botão não quebrar fluxo
+
+### 🟠 ALTA PRIORIDADE
+- [x] Remover dados mockados da Dashboard - Usando dados do banco
+- [x] Pendências do dia: aumentar fonte, melhorar ocupação da tela
+- [x] Campos Nova OS: remover "Motivo da visita" e "KM", manter só descrição do problema
+
+### 🔵 ESTRUTURAL
+- [x] Criar link "Ordens Itens Serviço" dentro de Cadastros (já existe no menu)
+- [ ] Revisar estrutura de rotas para evitar redirects indevidos

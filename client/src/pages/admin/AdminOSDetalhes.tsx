@@ -220,7 +220,7 @@ export default function AdminOSDetalhes() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/ordens-servico")} className="text-white hover:bg-white/10">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/admin")} className="text-white hover:bg-white/10">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-2xl font-bold text-white">OS não encontrada</h1>
@@ -252,7 +252,7 @@ export default function AdminOSDetalhes() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setLocation("/admin/ordens-servico")} className="text-white hover:bg-white/10">
+            <Button variant="ghost" size="icon" onClick={() => setLocation("/admin")} className="text-white hover:bg-white/10">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>

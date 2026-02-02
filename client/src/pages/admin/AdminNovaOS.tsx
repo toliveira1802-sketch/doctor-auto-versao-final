@@ -14,9 +14,7 @@ export default function AdminNovaOS() {
   const [searchCliente, setSearchCliente] = useState("");
   const [clienteSelecionado, setClienteSelecionado] = useState<any | null>(null);
   const [veiculoSelecionado, setVeiculoSelecionado] = useState<any | null>(null);
-  const [motivoVisita, setMotivoVisita] = useState("");
   const [descricaoProblema, setDescricaoProblema] = useState("");
-  const [km, setKm] = useState("");
   const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [novoCliente, setNovoCliente] = useState({
     nome: "",
@@ -76,8 +74,6 @@ export default function AdminNovaOS() {
       clienteId: clienteSelecionado?.id,
       veiculoId: veiculoSelecionado?.id,
       placa: veiculoSelecionado?.placa || novoCliente.placa,
-      km: km ? parseInt(km) : undefined,
-      motivoVisita: motivoVisita,
       descricaoProblema: descricaoProblema,
     });
   };
@@ -109,7 +105,6 @@ export default function AdminNovaOS() {
         modelo: novoCliente.veiculo,
         marca: novoCliente.marca || undefined,
         ano: novoCliente.ano ? parseInt(novoCliente.ano) : undefined,
-        kmAtual: km ? parseInt(km) : undefined,
       });
 
       if (!veiculoResult.success || !veiculoResult.id) {
@@ -122,8 +117,6 @@ export default function AdminNovaOS() {
         clienteId: clienteResult.id,
         veiculoId: veiculoResult.id,
         placa: novoCliente.placa,
-        km: km ? parseInt(km) : undefined,
-        motivoVisita: motivoVisita,
         descricaoProblema: descricaoProblema,
       });
     } catch (error) {
@@ -134,7 +127,7 @@ export default function AdminNovaOS() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/admin/ordens-servico">
+        <Link href="/admin">
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -375,28 +368,8 @@ export default function AdminNovaOS() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-slate-400">KM Atual</Label>
-                <Input
-                  placeholder="Ex: 85420"
-                  value={km}
-                  onChange={(e) => setKm(e.target.value.replace(/\D/g, ''))}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-slate-400">Motivo da Visita</Label>
-                <Input
-                  placeholder="Ex: Revisão, Troca de óleo, etc."
-                  value={motivoVisita}
-                  onChange={(e) => setMotivoVisita(e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
-              </div>
-            </div>
             <div className="space-y-2">
-              <Label className="text-slate-400">Descrição do Problema</Label>
+              <Label className="text-slate-400">Descrição do Problema *</Label>
               <Textarea
                 placeholder="Descreva o problema relatado pelo cliente..."
                 value={descricaoProblema}
