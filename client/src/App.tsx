@@ -28,6 +28,7 @@ import AdminMechanicFeedback from "./pages/admin/AdminMechanicFeedback";
 import AdminDocumentacao from "./pages/admin/AdminDocumentacao";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
 import AdminPendencias from "./pages/admin/AdminPendencias";
+import OSUltimate from "./pages/admin/OSUltimate";
 
 // Gestao Pages
 import GestaoDashboards from "./pages/gestao/GestaoDashboards";
@@ -67,6 +68,7 @@ function Router() {
       <Route path={"/admin/documentacao"} component={AdminDocumentacao} />
       <Route path={"/admin/configuracoes"} component={AdminConfiguracoes} />
       <Route path={"/admin/pendencias"} component={AdminPendencias} />
+      <Route path={"/admin/os-ultimate/:id"} component={OSUltimate} />
       
       {/* Gestao Routes */}
       <Route path={"/gestao"} component={GestaoDashboards} />

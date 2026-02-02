@@ -45,8 +45,10 @@ export default function AdminNovaOS() {
       toast.error("Selecione um cliente e um veículo");
       return;
     }
+    // Gera um ID temporário para a OS (em produção viria do banco)
+    const novaOsId = Date.now();
     toast.success("OS criada com sucesso!");
-    setLocation("/admin/ordens-servico");
+    setLocation(`/admin/os-ultimate/${novaOsId}`);
   };
 
   const handleCriarNovoCliente = () => {
