@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Plus, Search, Car, User, UserPlus } from "lucide-react";
-import { clientesMock, veiculosMock, mecanicosMock } from "@/lib/mockData";
+import { clientesMock, veiculosMock } from "@/lib/mockData";
 import { toast } from "sonner";
 
 export default function AdminNovaOS() {
@@ -222,31 +222,41 @@ export default function AdminNovaOS() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Lista de Clientes */}
+              {/* Lista de Clientes - só mostra quando tem busca */}
               <div>
                 <h4 className="text-gray-400 text-sm mb-2 flex items-center gap-2">
                   <User className="h-4 w-4" />
                   Clientes
                 </h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {clientesFiltrados.map((cliente) => (
-                    <div
-                      key={cliente.id}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                        clienteSelecionado?.id === cliente.id 
-                          ? "bg-red-500/20 border border-red-500" 
-                          : "bg-white/5 hover:bg-white/10"
-                      }`}
-                      onClick={() => {
-                        setClienteSelecionado(cliente);
-                        setVeiculoSelecionado(null);
-                      }}
-                    >
-                      <p className="text-white font-medium">{cliente.nomeCompleto}</p>
-                      <p className="text-gray-400 text-sm">{cliente.cpf} • {cliente.telefone}</p>
-                    </div>
-                  ))}
-                </div>
+                {searchCliente.length === 0 ? (
+                  <div className="bg-white/5 rounded-lg p-8 text-center">
+                    <p className="text-gray-400">Digite para buscar um cliente</p>
+                  </div>
+                ) : clientesFiltrados.length === 0 ? (
+                  <div className="bg-white/5 rounded-lg p-8 text-center">
+                    <p className="text-gray-400">Nenhum cliente encontrado</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {clientesFiltrados.map((cliente) => (
+                      <div
+                        key={cliente.id}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          clienteSelecionado?.id === cliente.id 
+                            ? "bg-red-500/20 border border-red-500" 
+                            : "bg-white/5 hover:bg-white/10"
+                        }`}
+                        onClick={() => {
+                          setClienteSelecionado(cliente);
+                          setVeiculoSelecionado(null);
+                        }}
+                      >
+                        <p className="text-white font-medium">{cliente.nomeCompleto}</p>
+                        <p className="text-gray-400 text-sm">{cliente.cpf} • {cliente.telefone}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Lista de Veículos do Cliente */}
@@ -305,26 +315,15 @@ export default function AdminNovaOS() {
             <CardTitle className="text-white">Dados da OS</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-gray-400">KM Atual</Label>
-                <Input
-                  type="number"
-                  placeholder="Ex: 125000"
-                  value={km}
-                  onChange={(e) => setKm(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-gray-400">Mecânico Responsável</Label>
-                <select className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white">
-                  <option value="" className="bg-gray-800">Selecione...</option>
-                  {mecanicosMock.map((mec) => (
-                    <option key={mec.id} value={mec.id} className="bg-gray-800">{mec.nome}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="space-y-2">
+              <Label className="text-gray-400">KM Atual</Label>
+              <Input
+                type="number"
+                placeholder="Ex: 125000"
+                value={km}
+                onChange={(e) => setKm(e.target.value)}
+                className="bg-white/5 border-white/10 text-white"
+              />
             </div>
             <div className="space-y-2">
               <Label className="text-gray-400">Motivo da Visita</Label>
