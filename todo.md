@@ -167,3 +167,9 @@
 - [x] Adaptar para usar wouter e estrutura atual
 - [x] Registrar rota no App.tsx (/cliente/orcamento/:osId)
 - [x] Testar funcionamento
+
+## Correção OS Ultimate (Visão Admin)
+- [x] Analisar AdminOSDetalhes.tsx do repositório antigo
+- [x] Analisar AdminOrdensServico.tsx do repositório antigo
+- [x] Adaptar AdminOSDetalhes para visão da oficina (com itens, prioridades, checklist, etc)
+- [x] Testar funcionamento - Página AdminOSDetalhes com visão admin completa funcionando
