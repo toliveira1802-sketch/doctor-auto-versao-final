@@ -39,6 +39,9 @@ import GestaoTecnologia from "./pages/gestao/GestaoTecnologia";
 import GestaoComercial from "./pages/gestao/GestaoComercial";
 import GestaoMelhorias from "./pages/gestao/GestaoMelhorias";
 
+// Cliente Pages
+import OrcamentoCliente from "./pages/cliente/OrcamentoCliente";
+
 function Router() {
   return (
     <Switch>
@@ -78,6 +81,9 @@ function Router() {
       <Route path={"/gestao/tecnologia"} component={GestaoTecnologia} />
       <Route path={"/gestao/comercial"} component={GestaoComercial} />
       <Route path={"/gestao/melhorias"} component={GestaoMelhorias} />
+      
+      {/* Cliente Routes */}
+      <Route path={"/cliente/orcamento/:osId"} component={OrcamentoCliente} />
       
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

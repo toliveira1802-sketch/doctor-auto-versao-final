@@ -151,13 +151,19 @@
 - [ ] Conectar com tabela de dados (aguardando usuário)
 
 ## Página OS Ultimate
-- [ ] Criar página /admin/os/:id (OS Ultimate)
-- [ ] Header com status, número OS, veículo, placa
-- [ ] Cards: Cliente, Valor Total, Previsão Entrega
-- [ ] Tabs: Resumo, Serviços, Fotos, Histórico
-- [ ] Problema Relatado e Diagnóstico Técnico
-- [ ] Lista de serviços com status (concluído, em andamento, pendente)
-- [ ] Resumo financeiro (peças, mão de obra, desconto, total)
-- [ ] Botões: Contatar Cliente, Atualizar Status
-- [ ] Conectar Nova OS para redirecionar após criar
-- [ ] Status inicial = Diagnóstico automático
+- [x] Criar página /admin/os-ultimate/:id (OS Ultimate)
+- [x] Header com status, número OS, veículo, placa
+- [x] Cards: Cliente, Valor Total, Previsão Entrega
+- [x] Tabs: Resumo, Serviços, Fotos, Histórico
+- [x] Problema Relatado e Diagnóstico Técnico
+- [x] Lista de serviços com status (concluído, em andamento, pendente)
+- [x] Resumo financeiro (peças, mão de obra, desconto, total)
+- [x] Botões: Contatar Cliente, Atualizar Status
+- [x] Conectar Nova OS para redirecionar após criar
+- [ ] Status inicial = Diagnóstico automático (a implementar com banco)
+
+## Página Orçamento Cliente
+- [x] Copiar OrcamentoCliente.tsx do repositório antigo
+- [x] Adaptar para usar wouter e estrutura atual
+- [x] Registrar rota no App.tsx (/cliente/orcamento/:osId)
+- [x] Testar funcionamento
