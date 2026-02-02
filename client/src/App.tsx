@@ -27,7 +27,6 @@ import AdminMechanicAnalytics from "./pages/admin/AdminMechanicAnalytics";
 import AdminMechanicFeedback from "./pages/admin/AdminMechanicFeedback";
 import AdminDocumentacao from "./pages/admin/AdminDocumentacao";
 import AdminConfiguracoes from "./pages/admin/AdminConfiguracoes";
-import AdminPainelTV from "./pages/admin/AdminPainelTV";
 import AdminPendencias from "./pages/admin/AdminPendencias";
 
 // Gestao Pages
@@ -67,7 +66,6 @@ function Router() {
       <Route path={"/admin/feedback-mecanicos"} component={AdminMechanicFeedback} />
       <Route path={"/admin/documentacao"} component={AdminDocumentacao} />
       <Route path={"/admin/configuracoes"} component={AdminConfiguracoes} />
-      <Route path={"/admin/painel-tv"} component={AdminPainelTV} />
       <Route path={"/admin/pendencias"} component={AdminPendencias} />
       
       {/* Gestao Routes */}

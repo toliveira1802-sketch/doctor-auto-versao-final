@@ -7,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   CalendarIcon, Save, RefreshCw, X,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -242,6 +242,13 @@ export default function AdminAgendaMecanicos() {
               <Save className="w-4 h-4" />
               {saving ? 'Salvando...' : 'Salvar'}
             </Button>
+
+            <Link href="/admin/feedback-mecanicos">
+              <Button variant="outline" className="gap-2">
+                <MessageSquare className="w-4 h-4" />
+                Feedback
+              </Button>
+            </Link>
           </div>
         </div>
 
