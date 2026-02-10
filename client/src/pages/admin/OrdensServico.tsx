@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'wouter'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -58,7 +58,7 @@ export default function OrdensServico() {
                     </p>
                 </div>
                 <Button asChild>
-                    <Link to={window.location.pathname.includes('/gestao') ? '/gestao/nova-os' : '/admin/nova-os'}>
+                    <Link href={window.location.pathname.includes('/gestao') ? '/gestao/nova-os' : '/admin/nova-os'}>
                         <Plus className="h-4 w-4 mr-2" />
                         Nova OS
                     </Link>
