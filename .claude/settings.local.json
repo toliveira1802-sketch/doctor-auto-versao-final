@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command:*)",
+      "Bash(npm install)",
+      "Bash(npx vite:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vercel:*)",
+      "Bash(where:*)",
+      "Bash(npx netlify deploy:*)",
+      "Bash(npx netlify:*)",
+      "Bash(python:*)",
+      "Bash(node -e \"\nconst { execSync } = require\\(''child_process''\\);\nconst result = execSync\\(''npx netlify api listAccountsForUser'', { encoding: ''utf8'' }\\);\nconsole.log\\(result\\);\n\")",
+      "Bash(node -e:*)",
+      "Bash(node deploy.mjs:*)",
+      "Bash(start:*)",
+      "Bash(npx surge:*)",
+      "Bash(npx wrangler pages deploy:*)"
+    ]
+  }
+}

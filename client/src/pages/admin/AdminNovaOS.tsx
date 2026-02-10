@@ -1,433 +1,363 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, Search, Car, User, UserPlus, Loader2, Check } from "lucide-react";
-import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+import { useLocation } from "wouter";
+import { 
+  ArrowLeft, Search, Car, CheckCircle, Heart, ChevronRight, X
+} from "lucide-react";
+import { AdminLayout } from "@/components/AdminLayout";
 
-export default function AdminNovaOS() {
-  const [, setLocation] = useLocation();
-  const [searchCliente, setSearchCliente] = useState("");
-  const [clienteSelecionado, setClienteSelecionado] = useState<any | null>(null);
-  const [veiculoSelecionado, setVeiculoSelecionado] = useState<any | null>(null);
-  const [motivoVisita, setMotivoVisita] = useState("");
-  const [descricaoProblema, setDescricaoProblema] = useState("");
-  const [km, setKm] = useState("");
-  const [showNovoCliente, setShowNovoCliente] = useState(false);
-  const [novoCliente, setNovoCliente] = useState({
-    nome: "",
-    telefone: "",
-    placa: "",
-    veiculo: "",
-    cpf: "",
-    email: "",
-    marca: "",
-    ano: "",
-  });
-  const [showCamposOpcionais, setShowCamposOpcionais] = useState(false);
+// Mock data
+let clientesMock = [
+  { id: 1, nomeCompleto: 'João Silva', cpf: '123.456.789-00', email: 'joao@email.com', telefone: '(11) 99999-1234', cidade: 'São Paulo', estado: 'SP', totalGasto: 4500 },
+  { id: 2, nomeCompleto: 'Maria Santos', cpf: '987.654.321-00', email: 'maria@email.com', telefone: '(11) 98888-5678', cidade: 'São Paulo', estado: 'SP', totalGasto: 2800 },
+  { id: 3, nomeCompleto: 'Pedro Lima', cpf: '456.789.123-00', email: 'pedro@email.com', telefone: '(11) 97777-9012', cidade: 'Guarulhos', estado: 'SP', totalGasto: 12500 },
+  { id: 4, nomeCompleto: 'Ana Costa', cpf: '321.654.987-00', email: 'ana@email.com', telefone: '(11) 96666-3456', cidade: 'Osasco', estado: 'SP', totalGasto: 950 },
+  { id: 5, nomeCompleto: 'Carlos Souza', cpf: '789.123.456-00', email: 'carlos@email.com', telefone: '(11) 95555-7890', cidade: 'São Paulo', estado: 'SP', totalGasto: 18900 },
+];
 
-  // tRPC queries
-  const { data: clientes = [], isLoading: loadingClientes } = trpc.clientes.list.useQuery();
-  const { data: veiculos = [], isLoading: loadingVeiculos } = trpc.veiculos.list.useQuery();
+let veiculosMock = [
+  { id: 1, clienteId: 1, placa: 'ABC-1234', marca: 'Honda', modelo: 'Civic', ano: 2020, cor: 'Prata', combustivel: 'Flex', kmAtual: 45000 },
+  { id: 2, clienteId: 1, placa: 'XYZ-9876', marca: 'Toyota', modelo: 'Corolla', ano: 2018, cor: 'Branco', combustivel: 'Flex', kmAtual: 72000 },
+  { id: 3, clienteId: 2, placa: 'DEF-5678', marca: 'Hyundai', modelo: 'HB20', ano: 2021, cor: 'Vermelho', combustivel: 'Flex', kmAtual: 28000 },
+  { id: 4, clienteId: 3, placa: 'GHI-9012', marca: 'VW', modelo: 'Polo', ano: 2022, cor: 'Preto', combustivel: 'Flex', kmAtual: 15000 },
+  { id: 5, clienteId: 4, placa: 'JKL-3456', marca: 'Chevrolet', modelo: 'Onix', ano: 2019, cor: 'Cinza', combustivel: 'Flex', kmAtual: 58000 },
+  { id: 6, clienteId: 5, placa: 'MNO-7890', marca: 'Jeep', modelo: 'Compass', ano: 2023, cor: 'Verde', combustivel: 'Flex', kmAtual: 12000 },
+];
 
-  // tRPC mutations
-  const createClienteMutation = trpc.clientes.create.useMutation();
-  const createVeiculoMutation = trpc.veiculos.create.useMutation();
-  const createOSMutation = trpc.ordensServico.create.useMutation({
-    onSuccess: (data) => {
-      if (data.success && data.id) {
-        toast.success(`OS ${data.numeroOs} criada com sucesso!`);
-        setLocation(`/admin/os/${data.id}`);
-      } else {
-        toast.error(data.error || "Erro ao criar OS");
-      }
-    },
-    onError: () => {
-      toast.error("Erro ao criar OS");
-    },
-  });
+interface ClienteNovoModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (data: { cliente: typeof clientesMock[0]; veiculo: typeof veiculosMock[0] }) => void;
+}
 
-  const clientesFiltrados = clientes.filter(c => 
-    (c.nomeCompleto?.toLowerCase() || "").includes(searchCliente.toLowerCase()) ||
-    (c.cpf || "").includes(searchCliente) ||
-    (c.telefone || "").includes(searchCliente)
-  );
+const ClienteNovoModal = ({ open, onClose, onSave }: ClienteNovoModalProps) => {
+  const [step, setStep] = useState(1);
+  const [cliente, setCliente] = useState({ nomeCompleto: '', telefone: '', cpf: '', email: '' });
+  const [veiculo, setVeiculo] = useState({ placa: '', marca: '', modelo: '', ano: '', kmAtual: '' });
 
-  const veiculosDoCliente = clienteSelecionado 
-    ? veiculos.filter(v => v.clienteId === clienteSelecionado.id)
-    : [];
+  if (!open) return null;
 
-  const handleCriarOS = () => {
-    if (!clienteSelecionado && !showNovoCliente) {
-      toast.error("Selecione um cliente ou crie um novo");
-      return;
+  const next = () => {
+    if (cliente.nomeCompleto && cliente.telefone) {
+      setStep(2);
     }
-    
-    if (clienteSelecionado && !veiculoSelecionado) {
-      toast.error("Selecione um veículo");
-      return;
-    }
-
-    createOSMutation.mutate({
-      clienteId: clienteSelecionado?.id,
-      veiculoId: veiculoSelecionado?.id,
-      placa: veiculoSelecionado?.placa || novoCliente.placa,
-      km: km ? parseInt(km) : undefined,
-      motivoVisita: motivoVisita,
-      descricaoProblema: descricaoProblema,
-    });
   };
 
-  const handleCriarNovoCliente = async () => {
-    if (!novoCliente.nome || !novoCliente.telefone || !novoCliente.placa || !novoCliente.veiculo) {
-      toast.error("Preencha os campos obrigatórios: Nome, Telefone, Placa e Veículo");
-      return;
-    }
-    
-    try {
-      // 1. Criar cliente no banco
-      const clienteResult = await createClienteMutation.mutateAsync({
-        nomeCompleto: novoCliente.nome,
-        telefone: novoCliente.telefone,
-        cpf: novoCliente.cpf || undefined,
-        email: novoCliente.email || undefined,
-      });
-
-      if (!clienteResult.success || !clienteResult.id) {
-        toast.error("Erro ao criar cliente");
-        return;
-      }
-
-      // 2. Criar veículo vinculado ao cliente
-      const veiculoResult = await createVeiculoMutation.mutateAsync({
-        clienteId: clienteResult.id,
-        placa: novoCliente.placa,
-        modelo: novoCliente.veiculo,
-        marca: novoCliente.marca || undefined,
-        ano: novoCliente.ano ? parseInt(novoCliente.ano) : undefined,
-        kmAtual: km ? parseInt(km) : undefined,
-      });
-
-      if (!veiculoResult.success || !veiculoResult.id) {
-        toast.error("Erro ao criar veículo");
-        return;
-      }
-
-      // 3. Criar OS com cliente e veículo vinculados
-      createOSMutation.mutate({
-        clienteId: clienteResult.id,
-        veiculoId: veiculoResult.id,
-        placa: novoCliente.placa,
-        km: km ? parseInt(km) : undefined,
-        motivoVisita: motivoVisita,
-        descricaoProblema: descricaoProblema,
-      });
-    } catch (error) {
-      toast.error("Erro ao criar cliente/veículo");
-    }
+  const save = () => {
+    if (!veiculo.placa) return;
+    const cid = clientesMock.length + 1;
+    const vid = veiculosMock.length + 1;
+    const nc = { id: cid, ...cliente, cidade: 'São Paulo', estado: 'SP', totalGasto: 0 };
+    const nv = { 
+      id: vid, 
+      clienteId: cid, 
+      ...veiculo, 
+      ano: parseInt(veiculo.ano) || new Date().getFullYear(),
+      cor: '', 
+      combustivel: 'Flex', 
+      kmAtual: parseInt(veiculo.kmAtual) || 0 
+    };
+    clientesMock.push(nc);
+    veiculosMock.push(nv);
+    onSave({ cliente: nc, veiculo: nv });
+    setStep(1);
+    setCliente({ nomeCompleto: '', telefone: '', cpf: '', email: '' });
+    setVeiculo({ placa: '', marca: '', modelo: '', ano: '', kmAtual: '' });
+    onClose();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/admin/ordens-servico">
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Plus className="w-6 h-6 text-red-500" />
-            Nova Ordem de Serviço
-          </h1>
-          <p className="text-slate-400">Criar uma nova OS</p>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-md">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-red-600 to-red-700 p-4 rounded-t-xl flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Heart className="w-5 h-5 text-white" />
+            <span className="text-white font-bold">Cliente Novo</span>
+            <span className="text-red-200 text-xs">({step}/2)</span>
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6 max-w-4xl">
-        {/* Card unificado: Cliente e Veículos */}
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-white flex items-center gap-2">
-              <User className="h-5 w-5 text-blue-400" />
-              Selecionar Cliente e Veículo
-            </CardTitle>
-            <Button 
-              variant="outline" 
-              className="border-green-500 text-green-500 hover:bg-green-500/10"
-              onClick={() => {
-                setShowNovoCliente(!showNovoCliente);
-                if (!showNovoCliente) {
-                  setClienteSelecionado(null);
-                  setVeiculoSelecionado(null);
-                }
-              }}
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              {showNovoCliente ? "Selecionar Existente" : "Novo Cliente"}
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Formulário de Novo Cliente */}
-            {showNovoCliente ? (
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                <h3 className="text-green-400 font-semibold mb-4 flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Novo Cliente
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-400">Nome *</Label>
-                    <Input
-                      placeholder="Nome do cliente"
-                      value={novoCliente.nome}
-                      onChange={(e) => setNovoCliente({...novoCliente, nome: e.target.value})}
-                      className="bg-slate-800 border-slate-700 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400">Telefone *</Label>
-                    <Input
-                      placeholder="(11) 99999-9999"
-                      value={novoCliente.telefone}
-                      onChange={(e) => setNovoCliente({...novoCliente, telefone: e.target.value})}
-                      className="bg-slate-800 border-slate-700 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400">Placa *</Label>
-                    <Input
-                      placeholder="ABC-1234"
-                      value={novoCliente.placa}
-                      onChange={(e) => setNovoCliente({...novoCliente, placa: e.target.value.toUpperCase()})}
-                      className="bg-slate-800 border-slate-700 text-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-400">Veículo *</Label>
-                    <Input
-                      placeholder="Ex: VW Golf GTI 2020"
-                      value={novoCliente.veiculo}
-                      onChange={(e) => setNovoCliente({...novoCliente, veiculo: e.target.value})}
-                      className="bg-slate-800 border-slate-700 text-white"
-                    />
-                  </div>
-                </div>
-                
-                <button
-                  type="button"
-                  onClick={() => setShowCamposOpcionais(!showCamposOpcionais)}
-                  className="text-blue-400 text-sm hover:underline mt-4 flex items-center gap-1"
-                >
-                  {showCamposOpcionais ? '▼ Ocultar campos opcionais' : '▶ Mostrar campos opcionais'}
-                </button>
-
-                {showCamposOpcionais && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 pt-4 border-t border-slate-700">
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">CPF</Label>
-                      <Input
-                        placeholder="000.000.000-00"
-                        value={novoCliente.cpf}
-                        onChange={(e) => setNovoCliente({...novoCliente, cpf: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Email</Label>
-                      <Input
-                        placeholder="email@exemplo.com"
-                        value={novoCliente.email}
-                        onChange={(e) => setNovoCliente({...novoCliente, email: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Marca</Label>
-                      <Input
-                        placeholder="Ex: Volkswagen"
-                        value={novoCliente.marca}
-                        onChange={(e) => setNovoCliente({...novoCliente, marca: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-400">Ano</Label>
-                      <Input
-                        placeholder="Ex: 2020"
-                        value={novoCliente.ano}
-                        onChange={(e) => setNovoCliente({...novoCliente, ano: e.target.value})}
-                        className="bg-slate-800 border-slate-700 text-white"
-                      />
-                    </div>
-                  </div>
-                )}
+        {/* Content */}
+        <div className="p-4">
+          {step === 1 ? (
+            <div className="space-y-3">
+              <div>
+                <label className="text-slate-300 text-xs">Nome *</label>
+                <input 
+                  value={cliente.nomeCompleto} 
+                  onChange={e => setCliente({...cliente, nomeCompleto: e.target.value})} 
+                  className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
+                />
               </div>
-            ) : (
-              <>
-                {/* Busca de Cliente */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    placeholder="Buscar por nome, CPF ou telefone..."
-                    value={searchCliente}
-                    onChange={(e) => setSearchCliente(e.target.value)}
-                    className="pl-10 bg-slate-800 border-slate-700 text-white"
+              <div>
+                <label className="text-slate-300 text-xs">Telefone *</label>
+                <input 
+                  value={cliente.telefone} 
+                  onChange={e => setCliente({...cliente, telefone: e.target.value})} 
+                  className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
+                />
+              </div>
+              <div>
+                <label className="text-slate-300 text-xs">CPF</label>
+                <input 
+                  value={cliente.cpf} 
+                  onChange={e => setCliente({...cliente, cpf: e.target.value})} 
+                  className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
+                />
+              </div>
+              <div>
+                <label className="text-slate-300 text-xs">Email</label>
+                <input 
+                  value={cliente.email} 
+                  onChange={e => setCliente({...cliente, email: e.target.value})} 
+                  className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={onClose} className="flex-1 px-3 py-2 border border-slate-700 text-slate-300 rounded-lg text-sm hover:bg-slate-800">
+                  Cancelar
+                </button>
+                <button onClick={next} className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-500">
+                  Próximo
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="text-slate-300 text-xs">Placa *</label>
+                <input 
+                  value={veiculo.placa} 
+                  onChange={e => setVeiculo({...veiculo, placa: e.target.value.toUpperCase()})} 
+                  className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm uppercase font-mono focus:border-red-500 outline-none" 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-slate-300 text-xs">Marca</label>
+                  <input 
+                    value={veiculo.marca} 
+                    onChange={e => setVeiculo({...veiculo, marca: e.target.value})} 
+                    className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
                   />
                 </div>
-
-                {/* Lista de Clientes */}
-                {searchCliente && (
-                  <div className="max-h-48 overflow-y-auto space-y-2">
-                    {loadingClientes ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                      </div>
-                    ) : clientesFiltrados.length === 0 ? (
-                      <p className="text-slate-400 text-center py-4">Nenhum cliente encontrado</p>
-                    ) : (
-                      clientesFiltrados.slice(0, 5).map((cliente) => (
-                        <div
-                          key={cliente.id}
-                          onClick={() => {
-                            setClienteSelecionado(cliente);
-                            setSearchCliente("");
-                            setVeiculoSelecionado(null);
-                          }}
-                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                            clienteSelecionado?.id === cliente.id
-                              ? "bg-blue-500/20 border border-blue-500/50"
-                              : "bg-slate-800/50 hover:bg-slate-800"
-                          }`}
-                        >
-                          <p className="font-medium text-white">{cliente.nomeCompleto}</p>
-                          <p className="text-sm text-slate-400">{cliente.telefone} • {cliente.cpf}</p>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Cliente Selecionado */}
-                {clienteSelecionado && (
-                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-white">{clienteSelecionado.nomeCompleto}</p>
-                        <p className="text-sm text-slate-400">{clienteSelecionado.telefone}</p>
-                      </div>
-                      <Check className="w-5 h-5 text-blue-400" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Veículos do Cliente */}
-                {clienteSelecionado && (
-                  <div className="space-y-2">
-                    <Label className="text-slate-400">Veículos do Cliente</Label>
-                    {loadingVeiculos ? (
-                      <div className="flex items-center justify-center py-4">
-                        <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
-                      </div>
-                    ) : veiculosDoCliente.length === 0 ? (
-                      <p className="text-slate-400 text-center py-4">Nenhum veículo cadastrado</p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {veiculosDoCliente.map((veiculo) => (
-                          <div
-                            key={veiculo.id}
-                            onClick={() => setVeiculoSelecionado(veiculo)}
-                            className={`p-3 rounded-lg cursor-pointer transition-colors flex items-center gap-3 ${
-                              veiculoSelecionado?.id === veiculo.id
-                                ? "bg-green-500/20 border border-green-500/50"
-                                : "bg-slate-800/50 hover:bg-slate-800"
-                            }`}
-                          >
-                            <Car className="w-5 h-5 text-slate-400" />
-                            <div>
-                              <p className="font-medium text-white">{veiculo.marca} {veiculo.modelo}</p>
-                              <p className="text-sm text-slate-400 font-mono">{veiculo.placa}</p>
-                            </div>
-                            {veiculoSelecionado?.id === veiculo.id && (
-                              <Check className="w-5 h-5 text-green-400 ml-auto" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Informações da OS */}
-        <Card className="bg-slate-900/50 border-slate-800">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Car className="h-5 w-5 text-orange-400" />
-              Informações da OS
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-slate-400">KM Atual</Label>
-                <Input
-                  placeholder="Ex: 85420"
-                  value={km}
-                  onChange={(e) => setKm(e.target.value.replace(/\D/g, ''))}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+                <div>
+                  <label className="text-slate-300 text-xs">Modelo</label>
+                  <input 
+                    value={veiculo.modelo} 
+                    onChange={e => setVeiculo({...veiculo, modelo: e.target.value})} 
+                    className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-slate-400">Motivo da Visita</Label>
-                <Input
-                  placeholder="Ex: Revisão, Troca de óleo, etc."
-                  value={motivoVisita}
-                  onChange={(e) => setMotivoVisita(e.target.value)}
-                  className="bg-slate-800 border-slate-700 text-white"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-slate-300 text-xs">Ano</label>
+                  <input 
+                    value={veiculo.ano} 
+                    onChange={e => setVeiculo({...veiculo, ano: e.target.value})} 
+                    className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="text-slate-300 text-xs">KM</label>
+                  <input 
+                    value={veiculo.kmAtual} 
+                    onChange={e => setVeiculo({...veiculo, kmAtual: e.target.value})} 
+                    className="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:border-red-500 outline-none" 
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setStep(1)} className="flex-1 px-3 py-2 border border-slate-700 text-slate-300 rounded-lg text-sm hover:bg-slate-800">
+                  Voltar
+                </button>
+                <button onClick={save} className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-500">
+                  Salvar
+                </button>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-slate-400">Descrição do Problema</Label>
-              <Textarea
-                placeholder="Descreva o problema relatado pelo cliente..."
-                value={descricaoProblema}
-                onChange={(e) => setDescricaoProblema(e.target.value)}
-                className="bg-slate-800 border-slate-700 text-white min-h-[100px]"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Botão de Criar */}
-        <div className="flex justify-end gap-4">
-          <Link href="/admin/ordens-servico">
-            <Button variant="outline" className="border-slate-700 text-white hover:bg-slate-800">
-              Cancelar
-            </Button>
-          </Link>
-          <Button 
-            className="bg-red-600 hover:bg-red-700"
-            onClick={showNovoCliente ? handleCriarNovoCliente : handleCriarOS}
-            disabled={createOSMutation.isPending}
-          >
-            {createOSMutation.isPending ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4 mr-2" />
-            )}
-            Criar OS
-          </Button>
+          )}
         </div>
       </div>
     </div>
+  );
+};
+
+export default function AdminNovaOS() {
+  const [, setLocation] = useLocation();
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({
+    placa: '',
+    veiculo: '',
+    cliente: '',
+    telefone: '',
+    kmAtual: '',
+    descricao: '',
+    clienteId: null as number | null,
+    veiculoId: null as number | null
+  });
+  const [results, setResults] = useState<Array<typeof veiculosMock[0] & { c?: typeof clientesMock[0] }>>([]);
+
+  const search = (p: string) => {
+    setForm({...form, placa: p});
+    if (p.length >= 3) {
+      setResults(
+        veiculosMock
+          .filter(v => v.placa.toLowerCase().includes(p.toLowerCase()))
+          .map(v => ({...v, c: clientesMock.find(c => c.id === v.clienteId)}))
+      );
+    } else {
+      setResults([]);
+    }
+  };
+
+  const select = (v: typeof results[0]) => {
+    setForm({
+      placa: v.placa,
+      veiculo: `${v.marca} ${v.modelo} ${v.ano}`,
+      cliente: v.c?.nomeCompleto || '',
+      telefone: v.c?.telefone || '',
+      kmAtual: v.kmAtual.toString(),
+      descricao: '',
+      clienteId: v.clienteId,
+      veiculoId: v.id
+    });
+    setResults([]);
+  };
+
+  const onSaveCliente = (d: { cliente: typeof clientesMock[0]; veiculo: typeof veiculosMock[0] }) => {
+    setForm({
+      placa: d.veiculo.placa,
+      veiculo: `${d.veiculo.marca} ${d.veiculo.modelo} ${d.veiculo.ano}`.trim() || d.veiculo.placa,
+      cliente: d.cliente.nomeCompleto,
+      telefone: d.cliente.telefone,
+      kmAtual: d.veiculo.kmAtual.toString(),
+      descricao: '',
+      clienteId: d.cliente.id,
+      veiculoId: d.veiculo.id
+    });
+  };
+
+  const criar = () => {
+    if (!form.placa || !form.descricao) return;
+    // Aqui seria a criação real no banco
+    // Por ora, apenas navega para a lista de OS
+    setLocation('/admin/ordens-servico');
+  };
+
+  return (
+    <AdminLayout>
+      <div className="flex-1 flex flex-col bg-slate-950">
+        {/* Header */}
+        <header className="h-12 bg-slate-900 border-b border-slate-800 flex items-center px-4">
+          <button onClick={() => setLocation('/admin')} className="text-slate-400 hover:text-white mr-3">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <h1 className="text-white font-semibold text-sm">Nova OS</h1>
+        </header>
+
+        {/* Content */}
+        <div className="flex-1 p-4 overflow-auto">
+          <div className="max-w-lg mx-auto">
+            {/* Botão Cliente Novo */}
+            <button 
+              onClick={() => setModal(true)} 
+              className="w-full p-4 mb-4 bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-500 hover:to-red-600 transition-colors flex items-center gap-3"
+            >
+              <Heart className="w-8 h-8 text-white" />
+              <div className="text-left">
+                <p className="text-white font-bold">Cliente Novo</p>
+                <p className="text-red-200 text-sm">Cadastro completo</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-white ml-auto" />
+            </button>
+
+            {/* Divisor */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-slate-700"></div>
+              <span className="text-slate-500 text-xs">ou busque existente</span>
+              <div className="flex-1 h-px bg-slate-700"></div>
+            </div>
+
+            {/* Form */}
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+              {/* Busca Placa */}
+              <div className="mb-3 relative">
+                <label className="text-slate-300 text-xs mb-1 block">Buscar Placa</label>
+                <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg">
+                  <Search className="w-4 h-4 text-slate-400" />
+                  <input 
+                    value={form.placa} 
+                    onChange={e => search(e.target.value.toUpperCase())} 
+                    className="flex-1 bg-transparent text-white outline-none uppercase font-mono text-sm" 
+                    placeholder="ABC-1234" 
+                  />
+                </div>
+                {results.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg z-10 max-h-48 overflow-auto">
+                    {results.map(r => (
+                      <button 
+                        key={r.id} 
+                        onClick={() => select(r)} 
+                        className="w-full p-2 text-left hover:bg-slate-700 flex items-center gap-2 text-sm"
+                      >
+                        <Car className="w-4 h-4 text-red-400" />
+                        <span className="text-white font-mono">{r.placa}</span>
+                        <span className="text-slate-400">- {r.marca} {r.modelo} - {r.c?.nomeCompleto}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cliente Identificado */}
+              {form.cliente && (
+                <div className="mb-3 p-2 bg-green-500/10 border border-green-500/30 rounded-lg text-sm">
+                  <div className="flex items-center gap-2 text-green-400 mb-1">
+                    <CheckCircle className="w-4 h-4" /> Cliente identificado
+                  </div>
+                  <p className="text-white">{form.cliente} - {form.veiculo}</p>
+                </div>
+              )}
+
+              {/* Descrição */}
+              <div className="mb-3">
+                <label className="text-slate-300 text-xs mb-1 block">Descrição do Problema *</label>
+                <textarea 
+                  value={form.descricao} 
+                  onChange={e => setForm({...form, descricao: e.target.value})} 
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm h-20 resize-none focus:border-red-500 outline-none" 
+                  placeholder="Descreva o problema..." 
+                />
+              </div>
+
+              {/* Botões */}
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setLocation('/admin')} 
+                  className="flex-1 px-3 py-2 border border-slate-700 text-slate-300 rounded-lg text-sm hover:bg-slate-800"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={criar} 
+                  disabled={!form.placa || !form.descricao} 
+                  className="flex-1 px-3 py-2 bg-red-600 disabled:bg-slate-700 disabled:cursor-not-allowed text-white rounded-lg text-sm hover:bg-red-500"
+                >
+                  Criar OS
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal */}
+        <ClienteNovoModal open={modal} onClose={() => setModal(false)} onSave={onSaveCliente} />
+      </div>
+    </AdminLayout>
   );
 }
